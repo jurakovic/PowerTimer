@@ -77,7 +77,7 @@ namespace Power_Timer
                     btnOptions.Text = "▼";
                 }
 
-                if (radioButtonCountdown.Checked)
+                if (tabControl1.SelectedIndex == 0)
                 {
                     countdownTime = Convert.ToInt32(tbHour.Text) * 3600
                             + Convert.ToInt32(tbMin.Text) * 60
@@ -122,6 +122,7 @@ namespace Power_Timer
                 {
                     con.Enabled = false;
                 }
+                tabControl1.Appearance = TabAppearance.FlatButtons;
                 groupBox1.Enabled = false;
 
                 btnStart.Enabled = true;
@@ -143,6 +144,7 @@ namespace Power_Timer
                 {
                     con.Enabled = true;
                 }
+                tabControl1.Appearance = TabAppearance.Buttons;
                 groupBox1.Enabled = false;
 
                 btnStart.Text = "START";
@@ -193,19 +195,16 @@ namespace Power_Timer
 
             if (h > 0)
             {
-                //this.Text = "Power Timer - " + action + h.ToString("00") + " h " + m.ToString("00") + " m " + s.ToString("00") + " s";
                 notifyIcon1.Text = "Power Timer - " + action + h.ToString("00") + " h " + m.ToString("00") + " m " + s.ToString("00") + " s";
                 return;
             }
             else if (m > 0)
             {
-                //this.Text = "Power Timer - " + action + m.ToString("00") + " m " + s.ToString("00") + " s";
                 notifyIcon1.Text = "Power Timer - " + action + h.ToString("00") + " h " + m.ToString("00") + " m " + s.ToString("00") + " s";
                 return;
             }
             else
             {
-                //this.Text = "Power Timer - " + action + s.ToString("00") + " s";
                 notifyIcon1.Text = "Power Timer - " + action + h.ToString("00") + " h " + m.ToString("00") + " m " + s.ToString("00") + " s";
                 return;
             }
@@ -247,12 +246,8 @@ namespace Power_Timer
             process.Start();
         }
 
-        private void radioButton_CheckedChanged(object sender, EventArgs e)
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //radioButtonCountdown.FlatStyle = FlatStyle.Standard;
-            //radioButtonAtTime.FlatStyle = FlatStyle.Standard;
-            //(sender as RadioButton).FlatStyle = FlatStyle.Popup;
-
             updateTime();
         }
         
@@ -452,7 +447,7 @@ namespace Power_Timer
 
         void updateTime()
         {
-            if (radioButtonCountdown.Checked)
+            if (tabControl1.SelectedIndex == 0)
             {
                 if (defaultHourDelay == 24)
                 {
@@ -542,7 +537,5 @@ namespace Power_Timer
 
             key.Close();
         }
-
-
     }
 }

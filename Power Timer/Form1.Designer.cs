@@ -58,10 +58,12 @@
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
-            this.radioButtonCountdown = new System.Windows.Forms.RadioButton();
-            this.radioButtonAtTime = new System.Windows.Forms.RadioButton();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
+            this.tabControl1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnStart
@@ -252,7 +254,7 @@
             this.cbWarnZeroTime.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cbWarnZeroTime.Location = new System.Drawing.Point(10, 47);
             this.cbWarnZeroTime.Name = "cbWarnZeroTime";
-            this.cbWarnZeroTime.Size = new System.Drawing.Size(217, 18);
+            this.cbWarnZeroTime.Size = new System.Drawing.Size(219, 18);
             this.cbWarnZeroTime.TabIndex = 1;
             this.cbWarnZeroTime.Text = "Warn me if countdown time is zero";
             this.cbWarnZeroTime.UseVisualStyleBackColor = true;
@@ -314,7 +316,7 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(7, 125);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(108, 14);
+            this.label2.Size = new System.Drawing.Size(110, 14);
             this.label2.TabIndex = 4;
             this.label2.Text = "Default time delay:";
             // 
@@ -323,7 +325,7 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(7, 99);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(145, 14);
+            this.label1.Size = new System.Drawing.Size(148, 14);
             this.label1.TabIndex = 3;
             this.label1.Text = "Default action on startup:";
             // 
@@ -334,7 +336,7 @@
             this.cbMinimizeToTray.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cbMinimizeToTray.Location = new System.Drawing.Point(10, 73);
             this.cbMinimizeToTray.Name = "cbMinimizeToTray";
-            this.cbMinimizeToTray.Size = new System.Drawing.Size(151, 18);
+            this.cbMinimizeToTray.Size = new System.Drawing.Size(153, 18);
             this.cbMinimizeToTray.TabIndex = 2;
             this.cbMinimizeToTray.Text = "Minimize to system tray";
             this.cbMinimizeToTray.UseVisualStyleBackColor = true;
@@ -346,7 +348,7 @@
             this.cbRememberWinPos.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cbRememberWinPos.Location = new System.Drawing.Point(10, 21);
             this.cbRememberWinPos.Name = "cbRememberWinPos";
-            this.cbRememberWinPos.Size = new System.Drawing.Size(177, 18);
+            this.cbRememberWinPos.Size = new System.Drawing.Size(178, 18);
             this.cbRememberWinPos.TabIndex = 0;
             this.cbRememberWinPos.Text = "Remember window position";
             this.cbRememberWinPos.UseVisualStyleBackColor = true;
@@ -382,51 +384,49 @@
             this.toolStripMenuItem2.Text = "Close";
             this.toolStripMenuItem2.Click += new System.EventHandler(this.toolStripMenuItem2_Click);
             // 
-            // radioButtonCountdown
+            // tabControl1
             // 
-            this.radioButtonCountdown.Appearance = System.Windows.Forms.Appearance.Button;
-            this.radioButtonCountdown.Checked = true;
-            this.radioButtonCountdown.FlatAppearance.BorderColor = System.Drawing.SystemColors.ActiveBorder;
-            this.radioButtonCountdown.FlatAppearance.CheckedBackColor = System.Drawing.SystemColors.ControlLight;
-            this.radioButtonCountdown.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.Control;
-            this.radioButtonCountdown.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlLight;
-            this.radioButtonCountdown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.radioButtonCountdown.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.radioButtonCountdown.Location = new System.Drawing.Point(6, 8);
-            this.radioButtonCountdown.Name = "radioButtonCountdown";
-            this.radioButtonCountdown.Size = new System.Drawing.Size(117, 24);
-            this.radioButtonCountdown.TabIndex = 0;
-            this.radioButtonCountdown.TabStop = true;
-            this.radioButtonCountdown.Text = "Coundtown";
-            this.radioButtonCountdown.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.radioButtonCountdown.UseVisualStyleBackColor = true;
-            this.radioButtonCountdown.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
+            this.tabControl1.Appearance = System.Windows.Forms.TabAppearance.Buttons;
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.tabControl1.ItemSize = new System.Drawing.Size(117, 26);
+            this.tabControl1.Location = new System.Drawing.Point(6, 8);
+            this.tabControl1.Multiline = true;
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(120, 58);
+            this.tabControl1.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
+            this.tabControl1.TabIndex = 0;
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
-            // radioButtonAtTime
+            // tabPage2
             // 
-            this.radioButtonAtTime.Appearance = System.Windows.Forms.Appearance.Button;
-            this.radioButtonAtTime.FlatAppearance.BorderColor = System.Drawing.SystemColors.ActiveBorder;
-            this.radioButtonAtTime.FlatAppearance.CheckedBackColor = System.Drawing.SystemColors.ControlLight;
-            this.radioButtonAtTime.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.Control;
-            this.radioButtonAtTime.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlLight;
-            this.radioButtonAtTime.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.radioButtonAtTime.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.radioButtonAtTime.Location = new System.Drawing.Point(6, 39);
-            this.radioButtonAtTime.Name = "radioButtonAtTime";
-            this.radioButtonAtTime.Size = new System.Drawing.Size(117, 24);
-            this.radioButtonAtTime.TabIndex = 1;
-            this.radioButtonAtTime.Text = "At time";
-            this.radioButtonAtTime.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.radioButtonAtTime.UseVisualStyleBackColor = true;
-            this.radioButtonAtTime.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
+            this.tabPage2.Location = new System.Drawing.Point(4, 59);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(112, 0);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Countdown";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Font = new System.Drawing.Font("Tahoma", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.tabPage1.Location = new System.Drawing.Point(4, 59);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(112, 0);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Set time";
+            this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 14F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(506, 70);
-            this.Controls.Add(this.radioButtonAtTime);
-            this.Controls.Add(this.radioButtonCountdown);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnOptions);
             this.Controls.Add(this.minDown);
@@ -456,6 +456,7 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
+            this.tabControl1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -491,8 +492,9 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
-        private System.Windows.Forms.RadioButton radioButtonCountdown;
-        private System.Windows.Forms.RadioButton radioButtonAtTime;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage1;
 
     }
 }
