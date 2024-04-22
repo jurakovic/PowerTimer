@@ -1,5 +1,5 @@
 ﻿
-namespace Power_Timer
+namespace PowerTimer
 {
 	/// <summary>
 	/// TextBox Number validator

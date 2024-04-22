@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Power_Timer.Properties
+namespace PowerTimer.Properties
 {
 
 

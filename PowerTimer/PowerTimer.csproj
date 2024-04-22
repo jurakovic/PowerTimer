@@ -7,8 +7,8 @@
     <ProjectGuid>{050BBDD9-BD90-40BE-B29E-CC7BC067A961}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Power_Timer</RootNamespace>
-    <AssemblyName>Power Timer</AssemblyName>
+    <RootNamespace>PowerTimer</RootNamespace>
+    <AssemblyName>PowerTimer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

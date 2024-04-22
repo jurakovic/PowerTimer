@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Power Timer", "Power Timer\Power Timer.csproj", "{050BBDD9-BD90-40BE-B29E-CC7BC067A961}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerTimer", "PowerTimer\PowerTimer.csproj", "{050BBDD9-BD90-40BE-B29E-CC7BC067A961}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

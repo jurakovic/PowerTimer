@@ -11,7 +11,7 @@ using System.Diagnostics;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
 
-namespace Power_Timer
+namespace PowerTimer
 {
 	public partial class Form1 : Form
 	{

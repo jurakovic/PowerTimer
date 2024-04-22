@@ -1,4 +1,4 @@
-﻿namespace Power_Timer
+﻿namespace PowerTimer
 {
     partial class Form1
     {
