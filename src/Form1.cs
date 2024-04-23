@@ -485,47 +485,27 @@ namespace PowerTimer
 		private void txtCommon_KeyDown(object sender, KeyEventArgs e)
 		{
 			TextBox txt = (TextBox)sender;
-			int hour, min, sec;
+			int value = Convert.ToInt32(txt.Text);
 
 			switch (e.KeyData)
 			{
 				case Keys.Up when txt.Name == txtHour.Name:
-					hour = Convert.ToInt32(txt.Text);
-					if (hour < 23) ++hour;
-					else hour = 0;
-					txt.Text = hour.ToString("00");
+					value = value < 23 ? value + 1 : 0;
 					break;
 				case Keys.Up when txt.Name == txtMinute.Name:
-					min = Convert.ToInt32(txt.Text);
-					if (min < 59) ++min;
-					else min = 00;
-					txt.Text = min.ToString("00");
-					break;
 				case Keys.Up when txt.Name == txtSecond.Name:
-					sec = Convert.ToInt32(txt.Text);
-					if (sec < 59) ++sec;
-					else sec = 00;
-					txt.Text = sec.ToString("00");
+					value = value < 59 ? value + 1 : 0;
 					break;
 				case Keys.Down when txt.Name == txtHour.Name:
-					hour = Convert.ToInt32(txt.Text);
-					if (hour > 0) --hour;
-					else hour = 23;
-					txt.Text = hour.ToString("00");
+					value = value > 0 ? value - 1 : 23;
 					break;
 				case Keys.Down when txt.Name == txtMinute.Name:
-					min = Convert.ToInt32(txt.Text);
-					if (min > 0) --min;
-					else min = 59;
-					txt.Text = min.ToString("00");
-					break;
 				case Keys.Down when txt.Name == txtSecond.Name:
-					sec = Convert.ToInt32(txt.Text);
-					if (sec > 0) --sec;
-					else sec = 59;
-					txt.Text = sec.ToString("00");
+					value = value > 0 ? value - 1 : 59;
 					break;
 			}
+
+			txt.Text = value.ToString("00");
 		}
 	}
 }
