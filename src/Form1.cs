@@ -403,7 +403,7 @@ namespace PowerTimer
 			{
 				if (defaultHourDelay == 24)
 				{
-					
+
 					txtHour.Text = "23";
 					txtMinute.Text = "59";
 					txtSecond.Text = "59";
@@ -482,10 +482,30 @@ namespace PowerTimer
 			key.Close();
 		}
 
-
-		private void tbHour_KeyDown(object sender, KeyEventArgs e)
+		private void txtCommon_KeyDown(object sender, KeyEventArgs e)
 		{
+			TextBox txt = (TextBox)sender;
+			int value = Convert.ToInt32(txt.Text);
 
+			switch (e.KeyData)
+			{
+				case Keys.Up when txt.Name == txtHour.Name:
+					value = value < 23 ? value + 1 : 0;
+					break;
+				case Keys.Up when txt.Name == txtMinute.Name:
+				case Keys.Up when txt.Name == txtSecond.Name:
+					value = value < 59 ? value + 1 : 0;
+					break;
+				case Keys.Down when txt.Name == txtHour.Name:
+					value = value > 0 ? value - 1 : 23;
+					break;
+				case Keys.Down when txt.Name == txtMinute.Name:
+				case Keys.Down when txt.Name == txtSecond.Name:
+					value = value > 0 ? value - 1 : 59;
+					break;
+			}
+
+			txt.Text = value.ToString("00");
 		}
 	}
 }

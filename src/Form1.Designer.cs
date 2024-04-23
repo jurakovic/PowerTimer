@@ -103,7 +103,7 @@
 			this.txtMinute.TabIndex = 3;
 			this.txtMinute.Text = "00";
 			this.txtMinute.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this.txtMinute.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbHour_KeyDown);
+			this.txtMinute.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCommon_KeyDown);
 			this.txtMinute.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textbox_KeyPress);
 			// 
 			// txtHour
@@ -116,7 +116,7 @@
 			this.txtHour.TabIndex = 2;
 			this.txtHour.Text = "01";
 			this.txtHour.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this.txtHour.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbHour_KeyDown);
+			this.txtHour.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCommon_KeyDown);
 			this.txtHour.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textbox_KeyPress);
 			// 
 			// txtSecond
@@ -129,7 +129,7 @@
 			this.txtSecond.TabIndex = 4;
 			this.txtSecond.Text = "00";
 			this.txtSecond.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this.txtSecond.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbHour_KeyDown);
+			this.txtSecond.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCommon_KeyDown);
 			this.txtSecond.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textbox_KeyPress);
 			// 
 			// btnOptions
