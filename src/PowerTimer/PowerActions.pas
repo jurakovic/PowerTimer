@@ -6,7 +6,13 @@ unit PowerActions;
 
 interface
 
+uses
+  Classes;
+
 type
+  { The ordinal values are part of the stored settings: they are written to
+    the registry (defaultAction) and match the list order of the C# version.
+    Only append new actions; never reorder or remove one. }
   TPowerAction = (paShutdown, paRestart, paLogoff, paLock, paSleep, paHibernate);
 
 const
@@ -18,6 +24,11 @@ const
 { Maps a list index (e.g. ItemIndex of a combo box or a stored setting)
   to an action. Out of range values give DefaultPowerAction. }
 function PowerActionFromIndex(AIndex: Integer): TPowerAction;
+
+{ Replaces the contents of AItems with the action names in TPowerAction
+  order, so the index of an item is the ordinal of its action (see
+  PowerActionFromIndex). Used to fill the action combo boxes. }
+procedure FillPowerActionList(AItems: TStrings);
 
 { Arguments for shutdown.exe, or '' when the action does not use it. }
 function ShutdownArguments(AAction: TPowerAction): string;
@@ -40,6 +51,20 @@ begin
     Result := TPowerAction(AIndex)
   else
     Result := DefaultPowerAction;
+end;
+
+procedure FillPowerActionList(AItems: TStrings);
+var
+  Action: TPowerAction;
+begin
+  AItems.BeginUpdate;
+  try
+    AItems.Clear;
+    for Action := Low(TPowerAction) to High(TPowerAction) do
+      AItems.Add(PowerActionNames[Action]);
+  finally
+    AItems.EndUpdate;
+  end;
 end;
 
 function ShutdownArguments(AAction: TPowerAction): string;

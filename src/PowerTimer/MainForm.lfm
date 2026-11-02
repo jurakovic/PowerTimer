@@ -111,19 +111,9 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ItemHeight = 16
-    ItemIndex = 0
-    Items.Strings = (
-      'Shutdown'
-      'Restart'
-      'Logoff'
-      'Lock'
-      'Sleep'
-      'Hibernate'
-    )
     ParentFont = False
     Style = csDropDownList
     TabOrder = 3
-    Text = 'Shutdown'
   end
   object btnStart: TButton
     Left = 362
@@ -232,19 +222,9 @@ object frmMain: TfrmMain
       Top = 78
       Width = 117
       ItemHeight = 14
-      ItemIndex = 0
       OnChange = cbDefaultActionChange
-      Items.Strings = (
-        'Shutdown'
-        'Restart'
-        'Logoff'
-        'Lock'
-        'Sleep'
-        'Hibernate'
-      )
       Style = csDropDownList
       TabOrder = 3
-      Text = 'Shutdown'
     end
     object lblDefaultDelay: TLabel
       Left = 8

@@ -108,6 +108,10 @@ var
 begin
   FClockMode := btnSetTime.Down;
   trayIcon.Icon.Assign(Application.Icon);
+  // Filled from PowerActions (not in the .lfm) so that ItemIndex always
+  // equals Ord(TPowerAction).
+  FillPowerActionList(cbAction.Items);
+  FillPowerActionList(cbDefaultAction.Items);
   Settings := LoadSettings;
   ApplySettings(Settings);
   RestoreWindowPosition(Settings);

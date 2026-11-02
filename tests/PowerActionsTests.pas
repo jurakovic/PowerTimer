@@ -8,22 +8,25 @@ unit PowerActionsTests;
 interface
 
 uses
-  fpcunit, testregistry, PowerActions;
+  Classes, fpcunit, testregistry, PowerActions;
 
 type
 
   TPowerActionsTests = class(TTestCase)
   published
-    procedure PowerActionFromIndex_MapsListOrder;
+    procedure PowerActionFromIndex_MatchesStoredOrder;
     procedure PowerActionFromIndex_OutOfRangeIsDefault;
+    procedure FillPowerActionList_IndexIsOrdinal;
     procedure ShutdownArguments_PerAction;
     procedure Names_MatchActions;
   end;
 
 implementation
 
-procedure TPowerActionsTests.PowerActionFromIndex_MapsListOrder;
+procedure TPowerActionsTests.PowerActionFromIndex_MatchesStoredOrder;
 begin
+  // These numbers are stored in the registry (also by the C# version):
+  // if this test fails, existing settings would select the wrong action.
   AssertTrue(PowerActionFromIndex(0) = paShutdown);
   AssertTrue(PowerActionFromIndex(1) = paRestart);
   AssertTrue(PowerActionFromIndex(2) = paLogoff);
@@ -37,6 +40,26 @@ begin
   AssertTrue(PowerActionFromIndex(-1) = DefaultPowerAction);
   AssertTrue(PowerActionFromIndex(6) = DefaultPowerAction);
   AssertTrue(PowerActionFromIndex(MaxInt) = DefaultPowerAction);
+end;
+
+procedure TPowerActionsTests.FillPowerActionList_IndexIsOrdinal;
+var
+  Items: TStringList;
+  Action: TPowerAction;
+begin
+  Items := TStringList.Create;
+  try
+    Items.Add('stale item');
+    FillPowerActionList(Items);
+    AssertEquals('count', Ord(High(TPowerAction)) + 1, Items.Count);
+    for Action := Low(TPowerAction) to High(TPowerAction) do
+    begin
+      AssertEquals(PowerActionNames[Action], Items[Ord(Action)]);
+      AssertTrue(PowerActionFromIndex(Ord(Action)) = Action);
+    end;
+  finally
+    Items.Free;
+  end;
 end;
 
 procedure TPowerActionsTests.ShutdownArguments_PerAction;
