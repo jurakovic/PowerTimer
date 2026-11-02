@@ -24,7 +24,7 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
-    <Units Count="3">
+    <Units Count="5">
       <Unit0>
         <Filename Value="PowerTimerTests.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -37,6 +37,14 @@
         <Filename Value="..\src\PowerTimer\TimerLogic.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="PowerActionsTests.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\src\PowerTimer\PowerActions.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit4>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

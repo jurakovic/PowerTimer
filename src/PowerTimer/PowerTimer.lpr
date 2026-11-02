@@ -9,7 +9,8 @@ uses
   Interfaces, // LCL widgetset
   Forms,
   MainForm,
-  TimerLogic;
+  TimerLogic,
+  PowerActions;
 
 {$R *.res}
 

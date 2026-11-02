@@ -8,7 +8,8 @@ program PowerTimerTests;
 
 uses
   Classes, consoletestrunner,
-  TimerLogicTests;
+  TimerLogicTests,
+  PowerActionsTests;
 
 var
   App: TTestRunner;
