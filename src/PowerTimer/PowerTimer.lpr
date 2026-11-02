@@ -8,7 +8,8 @@ uses
   {$ENDIF}
   Interfaces, // LCL widgetset
   Forms,
-  MainForm;
+  MainForm,
+  TimerLogic;
 
 {$R *.res}
 
