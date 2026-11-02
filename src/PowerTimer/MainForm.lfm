@@ -12,6 +12,7 @@ object frmMain: TfrmMain
   Font.Height = -12
   Font.Name = 'Tahoma'
   Position = poScreenCenter
+  OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   LCLVersion = '4.8.0.0'
@@ -144,6 +145,7 @@ object frmMain: TfrmMain
     Caption = #9660
     Font.Height = -8
     Font.Name = 'Tahoma'
+    OnClick = btnOptionsClick
     ParentFont = False
     TabOrder = 5
     TabStop = False
@@ -210,6 +212,7 @@ object frmMain: TfrmMain
       Width = 117
       ItemHeight = 14
       ItemIndex = 0
+      OnChange = cbDefaultActionChange
       Items.Strings = (
         'Shutdown'
         'Restart'
@@ -235,6 +238,7 @@ object frmMain: TfrmMain
       Top = 104
       Width = 39
       Caption = '+'
+      OnClick = btnDelayPlusClick
       TabOrder = 4
     end
     object edtDefaultDelay: TEdit
@@ -254,6 +258,7 @@ object frmMain: TfrmMain
       Top = 104
       Width = 41
       Caption = '-'
+      OnClick = btnDelayMinusClick
       TabOrder = 5
     end
     object btnAbout: TButton
@@ -262,6 +267,7 @@ object frmMain: TfrmMain
       Top = 104
       Width = 119
       Caption = 'About'
+      OnClick = btnAboutClick
       TabOrder = 6
     end
   end

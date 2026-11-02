@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, LCLType, TimerLogic, PowerActions;
+  ExtCtrls, LCLType, TimerLogic, PowerActions, AppSettings;
 
 type
 
@@ -33,7 +33,13 @@ type
     lblDefaultAction: TLabel;
     lblDefaultDelay: TLabel;
     tmrCountdown: TTimer;
+    procedure btnAboutClick(Sender: TObject);
+    procedure btnDelayMinusClick(Sender: TObject);
+    procedure btnDelayPlusClick(Sender: TObject);
+    procedure btnOptionsClick(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
+    procedure cbDefaultActionChange(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure ModeButtonClick(Sender: TObject);
@@ -51,6 +57,12 @@ type
     function ReadTimeFields: TTimeParts;
     procedure WriteTimeFields(const AParts: TTimeParts);
     procedure ResetTimeFields;
+    procedure SetDelayHours(AHours: Integer);
+    procedure SetOptionsVisible(AVisible: Boolean);
+    procedure ApplySettings(const ASettings: TAppSettings);
+    procedure RestoreWindowPosition(const ASettings: TAppSettings);
+    function CurrentSettings: TAppSettings;
+    procedure SaveCurrentSettings;
     function SelectedAction: TPowerAction;
     procedure SetInputsEnabled(AEnabled: Boolean);
     procedure StartCountdown;
@@ -68,14 +80,134 @@ implementation
 
 const
   AppTitle = 'Power Timer';
+  AppUrl = 'https://github.com/jurakovic/PowerTimer';
+
+  // UTF-8 encoded U+25BC / U+25B2 for the options toggle button
+  ArrowDown = #$E2#$96#$BC;
+  ArrowUp = #$E2#$96#$B2;
+
+  // Space below the last visible control, in 96 DPI pixels
+  BottomMargin = 6;
 
 { TfrmMain }
 
 procedure TfrmMain.FormCreate(Sender: TObject);
+var
+  Settings: TAppSettings;
 begin
-  FDelayHours := MinDelayHours;
   FClockMode := btnSetTime.Down;
+  Settings := LoadSettings;
+  ApplySettings(Settings);
+  RestoreWindowPosition(Settings);
+  SetOptionsVisible(False);
+end;
+
+procedure TfrmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+  SaveCurrentSettings;
+end;
+
+procedure TfrmMain.ApplySettings(const ASettings: TAppSettings);
+begin
+  cbRememberWinPos.Checked := ASettings.RememberWindowPos;
+  cbWarnZeroTime.Checked := ASettings.WarnZeroTime;
+  cbMinimizeToTray.Checked := ASettings.MinimizeToTray;
+  cbDefaultAction.ItemIndex := Ord(ASettings.DefaultAction);
+  cbAction.ItemIndex := Ord(ASettings.DefaultAction);
+  SetDelayHours(ASettings.DefaultDelayHours);
+end;
+
+procedure TfrmMain.RestoreWindowPosition(const ASettings: TAppSettings);
+var
+  Bounds: TRect;
+begin
+  if not (ASettings.RememberWindowPos and ASettings.HasWindowPos) then
+    Exit;
+  // Only use the stored position if the window would be on a monitor,
+  // e.g. not after a second monitor was disconnected.
+  Bounds := Rect(ASettings.WindowLeft, ASettings.WindowTop,
+    ASettings.WindowLeft + Width, ASettings.WindowTop + Height);
+  if Screen.MonitorFromRect(Bounds, mdNull) = nil then
+    Exit;
+  Position := poDesigned;
+  Left := ASettings.WindowLeft;
+  Top := ASettings.WindowTop;
+end;
+
+function TfrmMain.CurrentSettings: TAppSettings;
+begin
+  Result := DefaultSettings;
+  Result.RememberWindowPos := cbRememberWinPos.Checked;
+  Result.WarnZeroTime := cbWarnZeroTime.Checked;
+  Result.MinimizeToTray := cbMinimizeToTray.Checked;
+  Result.DefaultAction := PowerActionFromIndex(cbDefaultAction.ItemIndex);
+  Result.DefaultDelayHours := FDelayHours;
+  // RestoredLeft/Top are the normal window bounds, also while the window
+  // is minimized (where Left/Top would be off-screen).
+  Result.HasWindowPos := True;
+  Result.WindowLeft := RestoredLeft;
+  Result.WindowTop := RestoredTop;
+end;
+
+procedure TfrmMain.SaveCurrentSettings;
+begin
+  SaveSettings(CurrentSettings);
+end;
+
+procedure TfrmMain.SetDelayHours(AHours: Integer);
+begin
+  FDelayHours := ClampDelayHours(AHours);
+  edtDefaultDelay.Text := FormatTimeField(FDelayHours);
   ResetTimeFields;
+end;
+
+procedure TfrmMain.btnDelayPlusClick(Sender: TObject);
+begin
+  SetDelayHours(FDelayHours + 1);
+end;
+
+procedure TfrmMain.btnDelayMinusClick(Sender: TObject);
+begin
+  SetDelayHours(FDelayHours - 1);
+end;
+
+procedure TfrmMain.cbDefaultActionChange(Sender: TObject);
+begin
+  cbAction.ItemIndex := cbDefaultAction.ItemIndex;
+end;
+
+procedure TfrmMain.SetOptionsVisible(AVisible: Boolean);
+var
+  LastControl: TControl;
+begin
+  gbOptions.Visible := AVisible;
+  if AVisible then
+  begin
+    btnOptions.Caption := ArrowUp;
+    LastControl := gbOptions;
+  end
+  else
+  begin
+    btnOptions.Caption := ArrowDown;
+    LastControl := btnOptions;
+  end;
+  // Computed from the (already DPI scaled) controls instead of fixed
+  // window heights, so it also fits on high-DPI screens.
+  ClientHeight := LastControl.Top + LastControl.Height + Scale96ToForm(BottomMargin);
+end;
+
+procedure TfrmMain.btnOptionsClick(Sender: TObject);
+begin
+  SetOptionsVisible(not gbOptions.Visible);
+end;
+
+procedure TfrmMain.btnAboutClick(Sender: TObject);
+begin
+  MessageDlg('About ' + AppTitle,
+    AppTitle + LineEnding + LineEnding
+    + 'Shuts down, restarts, logs off, locks, suspends or hibernates the '
+    + 'computer after a countdown or at a set time.' + LineEnding + LineEnding
+    + AppUrl, mtInformation, [mbOK], 0);
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -216,6 +348,7 @@ begin
     Exit;
   end;
 
+  SetOptionsVisible(False);
   FEnteredTime := Entered;
   FDeadline := GetTickCount64 + QWord(DelayMs);
   FRunning := True;
@@ -260,6 +393,9 @@ procedure TfrmMain.RunAction(AAction: TPowerAction);
 var
   Error: string;
 begin
+  // Shutdown, restart and logoff may end the process without the form
+  // being closed normally, so save the settings first.
+  SaveCurrentSettings;
   if not ExecutePowerAction(AAction, Error) then
     MessageDlg(AppTitle, Error, mtError, [mbOK], 0);
 end;
