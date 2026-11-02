@@ -87,12 +87,12 @@ var
 
 implementation
 
+uses
+  AppInfo, AboutForm;
+
 {$R *.lfm}
 
 const
-  AppTitle = 'Power Timer';
-  AppUrl = 'https://github.com/jurakovic/PowerTimer';
-
   // UTF-8 encoded U+25BC / U+25B2 for the options toggle button
   ArrowDown = #$E2#$96#$BC;
   ArrowUp = #$E2#$96#$B2;
@@ -219,11 +219,7 @@ end;
 
 procedure TfrmMain.btnAboutClick(Sender: TObject);
 begin
-  MessageDlg('About ' + AppTitle,
-    AppTitle + LineEnding + LineEnding
-    + 'Shuts down, restarts, logs off, locks, suspends or hibernates the '
-    + 'computer after a countdown or at a set time.' + LineEnding + LineEnding
-    + AppUrl, mtInformation, [mbOK], 0);
+  ShowAbout(Self);
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

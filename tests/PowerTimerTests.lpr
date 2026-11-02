@@ -13,7 +13,8 @@ uses
   Classes, consoletestrunner,
   TimerLogicTests,
   PowerActionsTests,
-  AppSettingsTests;
+  AppSettingsTests,
+  AppInfoTests;
 
 var
   App: TTestRunner;

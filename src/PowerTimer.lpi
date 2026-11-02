@@ -23,7 +23,7 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <StringTable FileDescription="Power Timer" InternalName="PowerTimer" OriginalFilename="PowerTimer.exe" ProductName="Power Timer"/>
+      <StringTable FileDescription="Power Timer" InternalName="PowerTimer" OriginalFilename="PowerTimer.exe" ProductName="Power Timer" ProductVersion="0.0.0"/>
     </VersionInfo>
     <BuildModes Count="2">
       <Item1 Name="Release" Default="True"/>
@@ -74,7 +74,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="7">
       <Unit0>
         <Filename Value="PowerTimer.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -87,17 +87,28 @@
         <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
-        <Filename Value="TimerLogic.pas"/>
+        <Filename Value="AboutForm.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmAbout"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit2>
       <Unit3>
-        <Filename Value="PowerActions.pas"/>
+        <Filename Value="AppInfo.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="AppSettings.pas"/>
+        <Filename Value="TimerLogic.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="PowerActions.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="AppSettings.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit6>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

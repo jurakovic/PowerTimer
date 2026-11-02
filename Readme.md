@@ -31,7 +31,7 @@ Power Timer is written in Free Pascal with [Lazarus](https://www.lazarus-ide.org
 	lazbuild --build-mode=Release src/PowerTimer.lpi
 	```
 
-	The executable is written to `src/bin/x86_64-win64/PowerTimer.exe`. Its version is 0.0.0.0; release builds carry their version, see [Release](#release).
+	The executable is written to `src/bin/x86_64-win64/PowerTimer.exe`. Its version, shown in the About box, is 0.0.0; release builds carry their version, see [Release](#release).
 
 ### Tests
 

@@ -9,6 +9,8 @@ uses
   Interfaces, // LCL widgetset
   Forms,
   MainForm,
+  AboutForm,
+  AppInfo,
   TimerLogic,
   PowerActions,
   AppSettings;
@@ -17,7 +19,7 @@ uses
 
 begin
   RequireDerivedFormResource := True;
-  Application.Title := 'Power Timer';
+  Application.Title := AppTitle;
   Application.Scaled := True;
   // The main form owns the taskbar button, so hiding it to the tray
   // removes the button.
