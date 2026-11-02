@@ -30,12 +30,12 @@ object frmAbout: TfrmAbout
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = imgIcon
     Left = 64
-    Height = 19
+    Height = 17
     Top = 16
-    Width = 95
+    Width = 84
     BorderSpacing.Left = 16
     Caption = 'Power Timer'
-    Font.Height = -16
+    Font.Height = -14
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
