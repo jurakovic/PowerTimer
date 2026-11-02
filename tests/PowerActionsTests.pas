@@ -26,8 +26,8 @@ implementation
 
 procedure TPowerActionsTests.PowerActionFromIndex_MatchesStoredOrder;
 begin
-  // These numbers are stored in the registry (also by the C# version):
-  // if this test fails, existing settings would select the wrong action.
+  // These numbers are stored in the registry: if this test fails, existing
+  // settings would select the wrong action.
   AssertTrue(PowerActionFromIndex(0) = paShutdown);
   AssertTrue(PowerActionFromIndex(1) = paRestart);
   AssertTrue(PowerActionFromIndex(2) = paLogoff);

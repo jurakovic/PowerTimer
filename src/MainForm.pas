@@ -108,8 +108,8 @@ var
 begin
   FClockMode := btnSetTime.Down;
   trayIcon.Icon.Assign(Application.Icon);
-  // Filled from PowerActions (not in the .lfm) so that ItemIndex always
-  // equals Ord(TPowerAction).
+  // Filled from PowerActions so that ItemIndex always equals
+  // Ord(TPowerAction).
   FillPowerActionList(cbAction.Items);
   FillPowerActionList(cbDefaultAction.Items);
   Settings := LoadSettings;
@@ -207,8 +207,8 @@ begin
     btnOptions.Caption := ArrowDown;
     LastControl := btnOptions;
   end;
-  // Computed from the (already DPI scaled) controls instead of fixed
-  // window heights, so it also fits on high-DPI screens.
+  // Computed from the (already DPI scaled) controls, so it fits on high-DPI
+  // screens too.
   ClientHeight := LastControl.Top + LastControl.Height + Scale96ToForm(BottomMargin);
 end;
 

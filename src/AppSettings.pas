@@ -1,7 +1,7 @@
 unit AppSettings;
 
-{ User settings, stored in HKEY_CURRENT_USER\Software\Power Timer using
-  the same value names as the C# version, so existing settings are kept. }
+{ User settings, stored in HKEY_CURRENT_USER\Software\Power Timer. The value
+  names are part of the stored format: renaming one loses that setting. }
 
 {$mode objfpc}{$H+}
 
@@ -27,7 +27,8 @@ type
 
 function DefaultSettings: TAppSettings;
 
-{ Brings values that may come from an old or edited registry into range. }
+{ Brings the values into their valid ranges, e.g. values from a registry
+  that was edited by hand. }
 procedure NormalizeSettings(var ASettings: TAppSettings);
 
 { Reads the settings. Missing or invalid values fall back to the defaults. }

@@ -11,8 +11,8 @@ uses
 
 type
   { The ordinal values are part of the stored settings: they are written to
-    the registry (defaultAction) and match the list order of the C# version.
-    Only append new actions; never reorder or remove one. }
+    the registry (defaultAction). Only append new actions; never reorder or
+    remove one. }
   TPowerAction = (paShutdown, paRestart, paLogoff, paLock, paSleep, paHibernate);
 
 const
