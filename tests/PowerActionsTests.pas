@@ -8,7 +8,7 @@ unit PowerActionsTests;
 interface
 
 uses
-  Classes, fpcunit, testregistry, PowerActions;
+  Classes, SysUtils, fpcunit, testregistry, PowerActions;
 
 type
 
@@ -18,6 +18,7 @@ type
     procedure PowerActionFromIndex_OutOfRangeIsDefault;
     procedure FillPowerActionList_IndexIsOrdinal;
     procedure ShutdownArguments_PerAction;
+    procedure ShutdownExePath_IsInSystemDirectory;
     procedure Names_MatchActions;
   end;
 
@@ -70,6 +71,23 @@ begin
   AssertEquals('/h', ShutdownArguments(paHibernate));
   AssertEquals('', ShutdownArguments(paLock));
   AssertEquals('', ShutdownArguments(paSleep));
+end;
+
+procedure TPowerActionsTests.ShutdownExePath_IsInSystemDirectory;
+{$IFDEF WINDOWS}
+var
+  Path: string;
+{$ENDIF}
+begin
+  {$IFDEF WINDOWS}
+  Path := ShutdownExePath;
+  AssertTrue('in System32: ' + Path, SameText(
+    IncludeTrailingPathDelimiter(GetEnvironmentVariable('SystemRoot'))
+    + 'System32\shutdown.exe', Path));
+  AssertTrue('exists: ' + Path, FileExists(Path));
+  {$ELSE}
+  AssertEquals('', ShutdownExePath);
+  {$ENDIF}
 end;
 
 procedure TPowerActionsTests.Names_MatchActions;

@@ -33,6 +33,12 @@ procedure FillPowerActionList(AItems: TStrings);
 { Arguments for shutdown.exe, or '' when the action does not use it. }
 function ShutdownArguments(AAction: TPowerAction): string;
 
+{ Full path of shutdown.exe in the Windows system directory, or '' when that
+  directory cannot be determined (always '' on other platforms). Starting a
+  bare 'shutdown.exe' would look in the application's own directory first,
+  so a planted shutdown.exe next to PowerTimer.exe would be run instead. }
+function ShutdownExePath: string;
+
 { Performs the action. Returns False and a message in AError when the
   action could not be started. }
 function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
@@ -81,15 +87,40 @@ end;
 
 {$IFDEF WINDOWS}
 
+const
+  ShutdownExeName = 'shutdown.exe';
+
+function ShutdownExePath: string;
+var
+  Buffer: array[0..MAX_PATH] of WideChar;
+  Len: UINT;
+  Dir: UnicodeString;
+begin
+  Len := GetSystemDirectoryW(@Buffer[0], Length(Buffer));
+  // 0 means failure; a value >= the buffer size is the size it would need
+  if (Len = 0) or (Len >= Length(Buffer)) then
+    Exit('');
+  SetString(Dir, PWideChar(@Buffer[0]), Len);
+  Result := IncludeTrailingPathDelimiter(string(Dir)) + ShutdownExeName;
+end;
+
 function RunShutdownExe(const AArguments: string; out AError: string): Boolean;
 var
   Proc: TProcess;
+  ExePath: string;
 begin
   Result := False;
   AError := '';
+  ExePath := ShutdownExePath;
+  if ExePath = '' then
+  begin
+    AError := 'Could not find ' + ShutdownExeName
+      + ': the Windows system directory is unknown.';
+    Exit;
+  end;
   Proc := TProcess.Create(nil);
   try
-    Proc.Executable := 'shutdown.exe';
+    Proc.Executable := ExePath;
     Proc.Parameters.Delimiter := ' ';
     Proc.Parameters.StrictDelimiter := True;
     Proc.Parameters.DelimitedText := AArguments;
@@ -100,7 +131,7 @@ begin
     except
       on E: Exception do
       begin
-        AError := 'Could not start shutdown.exe: ' + E.Message;
+        AError := 'Could not start ' + ExePath + ': ' + E.Message;
         Exit;
       end;
     end;
@@ -167,6 +198,11 @@ begin
 end;
 
 {$ELSE}
+
+function ShutdownExePath: string;
+begin
+  Result := '';
+end;
 
 function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
 begin
