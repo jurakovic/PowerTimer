@@ -184,8 +184,6 @@ object frmMain: TfrmMain
       Top = 2
       Width = 178
       Caption = 'Remember window position'
-      Checked = True
-      State = cbChecked
       TabOrder = 0
     end
     object cbWarnZeroTime: TCheckBox
@@ -194,8 +192,6 @@ object frmMain: TfrmMain
       Top = 28
       Width = 219
       Caption = 'Warn me if countdown time is zero'
-      Checked = True
-      State = cbChecked
       TabOrder = 1
     end
     object cbMinimizeToTray: TCheckBox
@@ -204,8 +200,6 @@ object frmMain: TfrmMain
       Top = 54
       Width = 153
       Caption = 'Minimize to system tray'
-      Checked = True
-      State = cbChecked
       TabOrder = 2
     end
     object lblDefaultAction: TLabel

@@ -53,9 +53,9 @@ const
 
 function DefaultSettings: TAppSettings;
 begin
-  Result.RememberWindowPos := True;
-  Result.WarnZeroTime := True;
-  Result.MinimizeToTray := True;
+  Result.RememberWindowPos := False;
+  Result.WarnZeroTime := False;
+  Result.MinimizeToTray := False;
   Result.DefaultAction := DefaultPowerAction;
   Result.DefaultDelayHours := MinDelayHours;
   Result.HasWindowPos := False;

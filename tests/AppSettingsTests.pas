@@ -75,9 +75,9 @@ var
   S: TAppSettings;
 begin
   S := DefaultSettings;
-  AssertTrue(S.RememberWindowPos);
-  AssertTrue(S.WarnZeroTime);
-  AssertTrue(S.MinimizeToTray);
+  AssertFalse(S.RememberWindowPos);
+  AssertFalse(S.WarnZeroTime);
+  AssertFalse(S.MinimizeToTray);
   AssertTrue(S.DefaultAction = paShutdown);
   AssertEquals(1, S.DefaultDelayHours);
   AssertFalse(S.HasWindowPos);
@@ -114,10 +114,11 @@ procedure TAppSettingsTests.SaveAndLoad_RoundTrips;
 var
   S, L: TAppSettings;
 begin
+  // Values other than the defaults, so loading the defaults fails the test
   S := DefaultSettings;
-  S.RememberWindowPos := False;
-  S.WarnZeroTime := False;
-  S.MinimizeToTray := False;
+  S.RememberWindowPos := True;
+  S.WarnZeroTime := True;
+  S.MinimizeToTray := True;
   S.DefaultAction := paHibernate;
   S.DefaultDelayHours := 7;
   S.HasWindowPos := True;
@@ -126,9 +127,9 @@ begin
   AssertTrue('save', SaveSettings(S, TestKey));
 
   L := LoadSettings(TestKey);
-  AssertFalse(L.RememberWindowPos);
-  AssertFalse(L.WarnZeroTime);
-  AssertFalse(L.MinimizeToTray);
+  AssertTrue(L.RememberWindowPos);
+  AssertTrue(L.WarnZeroTime);
+  AssertTrue(L.MinimizeToTray);
   AssertTrue(L.DefaultAction = paHibernate);
   AssertEquals(7, L.DefaultDelayHours);
   AssertTrue(L.HasWindowPos);
