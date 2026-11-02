@@ -10,7 +10,8 @@ uses
   Forms,
   MainForm,
   TimerLogic,
-  PowerActions;
+  PowerActions,
+  AppSettings;
 
 {$R *.res}
 

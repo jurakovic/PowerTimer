@@ -7,9 +7,13 @@ program PowerTimerTests;
 {$mode objfpc}{$H+}
 
 uses
+  {$IFDEF UNIX}
+  cwstring, // needed by the registry emulation on Unix
+  {$ENDIF}
   Classes, consoletestrunner,
   TimerLogicTests,
-  PowerActionsTests;
+  PowerActionsTests,
+  AppSettingsTests;
 
 var
   App: TTestRunner;
