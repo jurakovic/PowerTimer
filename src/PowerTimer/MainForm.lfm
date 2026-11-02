@@ -15,6 +15,7 @@ object frmMain: TfrmMain
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnWindowStateChange = FormWindowStateChange
   LCLVersion = '4.8.0.0'
   object btnCountdown: TSpeedButton
     Left = 8
@@ -156,6 +157,26 @@ object frmMain: TfrmMain
     OnTimer = tmrCountdownTimer
     Left = 8
     Top = 80
+  end
+  object trayIcon: TTrayIcon
+    Hint = 'Power Timer'
+    PopUpMenu = pmTray
+    OnClick = trayIconClick
+    Left = 40
+    Top = 80
+  end
+  object pmTray: TPopupMenu
+    Left = 72
+    Top = 80
+    object miShow: TMenuItem
+      Caption = 'Show'
+      Default = True
+      OnClick = miShowClick
+    end
+    object miClose: TMenuItem
+      Caption = 'Close'
+      OnClick = miCloseClick
+    end
   end
   object gbOptions: TGroupBox
     Left = 6

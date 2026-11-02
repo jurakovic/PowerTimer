@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, LCLType, TimerLogic, PowerActions, AppSettings;
+  ExtCtrls, Menus, LCLType, TimerLogic, PowerActions, AppSettings;
 
 type
 
@@ -32,7 +32,11 @@ type
     gbOptions: TGroupBox;
     lblDefaultAction: TLabel;
     lblDefaultDelay: TLabel;
+    miClose: TMenuItem;
+    miShow: TMenuItem;
+    pmTray: TPopupMenu;
     tmrCountdown: TTimer;
+    trayIcon: TTrayIcon;
     procedure btnAboutClick(Sender: TObject);
     procedure btnDelayMinusClick(Sender: TObject);
     procedure btnDelayPlusClick(Sender: TObject);
@@ -42,11 +46,15 @@ type
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
+    procedure FormWindowStateChange(Sender: TObject);
+    procedure miCloseClick(Sender: TObject);
+    procedure miShowClick(Sender: TObject);
     procedure ModeButtonClick(Sender: TObject);
     procedure TimeFieldExit(Sender: TObject);
     procedure TimeFieldKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure TimeFieldKeyPress(Sender: TObject; var Key: Char);
     procedure tmrCountdownTimer(Sender: TObject);
+    procedure trayIconClick(Sender: TObject);
   private
     FClockMode: Boolean;
     FDelayHours: Integer;
@@ -69,6 +77,9 @@ type
     procedure StopCountdown;
     procedure ShowRemaining(ASeconds: Integer);
     procedure RunAction(AAction: TPowerAction);
+    procedure SetTrayHint(const AHint: string);
+    procedure HideToTray;
+    procedure RestoreFromTray;
   end;
 
 var
@@ -96,6 +107,7 @@ var
   Settings: TAppSettings;
 begin
   FClockMode := btnSetTime.Down;
+  trayIcon.Icon.Assign(Application.Icon);
   Settings := LoadSettings;
   ApplySettings(Settings);
   RestoreWindowPosition(Settings);
@@ -367,11 +379,60 @@ begin
   WriteTimeFields(FEnteredTime);
   SetInputsEnabled(True);
   btnStart.Caption := 'START';
+  SetTrayHint(AppTitle);
 end;
 
 procedure TfrmMain.ShowRemaining(ASeconds: Integer);
 begin
   WriteTimeFields(SecondsToTimeParts(ASeconds));
+  SetTrayHint(AppTitle + ' - ' + PowerActionNames[SelectedAction] + ' after '
+    + FormatRemaining(ASeconds));
+end;
+
+procedure TfrmMain.SetTrayHint(const AHint: string);
+begin
+  // Only on change: updating a visible tray icon is not free and the
+  // countdown timer fires several times per second.
+  if trayIcon.Hint <> AHint then
+    trayIcon.Hint := AHint;
+end;
+
+procedure TfrmMain.FormWindowStateChange(Sender: TObject);
+begin
+  if (WindowState = wsMinimized) and cbMinimizeToTray.Checked then
+    HideToTray;
+end;
+
+procedure TfrmMain.HideToTray;
+begin
+  trayIcon.Show;
+  // Hide the restored window rather than keeping a hidden minimized one,
+  // so it reappears at its normal position.
+  WindowState := wsNormal;
+  Hide;
+end;
+
+procedure TfrmMain.RestoreFromTray;
+begin
+  Show;
+  WindowState := wsNormal;
+  Application.BringToFront;
+  trayIcon.Hide;
+end;
+
+procedure TfrmMain.trayIconClick(Sender: TObject);
+begin
+  RestoreFromTray;
+end;
+
+procedure TfrmMain.miShowClick(Sender: TObject);
+begin
+  RestoreFromTray;
+end;
+
+procedure TfrmMain.miCloseClick(Sender: TObject);
+begin
+  Close;
 end;
 
 procedure TfrmMain.tmrCountdownTimer(Sender: TObject);
