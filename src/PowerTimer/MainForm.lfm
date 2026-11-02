@@ -12,6 +12,8 @@ object frmMain: TfrmMain
   Font.Height = -12
   Font.Name = 'Tahoma'
   Position = poScreenCenter
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
   LCLVersion = '4.8.0.0'
   object btnCountdown: TSpeedButton
     Left = 8
@@ -26,6 +28,7 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     GroupIndex = 1
+    OnClick = ModeButtonClick
     ParentFont = False
   end
   object btnSetTime: TSpeedButton
@@ -40,6 +43,7 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     GroupIndex = 1
+    OnClick = ModeButtonClick
     ParentFont = False
   end
   object edtHour: TEdit
@@ -53,6 +57,9 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     MaxLength = 2
+    OnExit = TimeFieldExit
+    OnKeyDown = TimeFieldKeyDown
+    OnKeyPress = TimeFieldKeyPress
     ParentFont = False
     TabOrder = 0
     Text = '01'
@@ -68,6 +75,9 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     MaxLength = 2
+    OnExit = TimeFieldExit
+    OnKeyDown = TimeFieldKeyDown
+    OnKeyPress = TimeFieldKeyPress
     ParentFont = False
     TabOrder = 1
     Text = '00'
@@ -83,6 +93,9 @@ object frmMain: TfrmMain
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     MaxLength = 2
+    OnExit = TimeFieldExit
+    OnKeyDown = TimeFieldKeyDown
+    OnKeyPress = TimeFieldKeyPress
     ParentFont = False
     TabOrder = 2
     Text = '00'
@@ -119,6 +132,7 @@ object frmMain: TfrmMain
     Font.Height = -13
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
+    OnClick = btnStartClick
     ParentFont = False
     TabOrder = 4
   end
@@ -133,6 +147,13 @@ object frmMain: TfrmMain
     ParentFont = False
     TabOrder = 5
     TabStop = False
+  end
+  object tmrCountdown: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = tmrCountdownTimer
+    Left = 8
+    Top = 80
   end
   object gbOptions: TGroupBox
     Left = 6
