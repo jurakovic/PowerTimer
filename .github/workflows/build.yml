@@ -1,14 +1,24 @@
 name: Build
 
-# Builds Power Timer and runs the tests for every push and pull request, and
-# uploads PowerTimer.exe. Its version is <next release>-build.<run number>,
-# e.g. 1.0.1-build.42: the version that the Publish workflow would release
-# from master next, marked as a pre-release of it. Releases are made with
-# the Publish workflow, see publish.yml.
+# Builds Power Timer, runs the tests and uploads PowerTimer.exe for pushes
+# to master that change the application, its tests or how they are built,
+# and when run from the Actions tab ("Run workflow", for any branch).
+#
+# The version of PowerTimer.exe is <next release>-build.<run number>, e.g.
+# 1.0.1-build.42: the version that the Publish workflow would release from
+# master next, marked as a pre-release of it. Releases are made with the
+# Publish workflow, see publish.yml.
 on:
   push:
-    branches: ['**']
-  pull_request:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'publish.sh'
+      # Line endings of publish.sh on the Windows runner
+      - '.gitattributes'
+      - '.github/workflows/build.yml'
+      - '.github/actions/setup-lazarus/**'
   workflow_dispatch:
 
 permissions:
