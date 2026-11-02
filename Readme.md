@@ -20,14 +20,14 @@ Every build on GitHub Actions uploads `PowerTimer.exe` as the **PowerTimer-win64
 
 Power Timer is written in Free Pascal with [Lazarus](https://www.lazarus-ide.org/) (Lazarus 4.8 / FPC 3.2.2).
 
-- **IDE** – open `src/PowerTimer/PowerTimer.lpi` in Lazarus and press *Run*
+- **IDE** – open `src/PowerTimer.lpi` in Lazarus and press *Run*
 - **Command line**
 
 	```
-	lazbuild --build-mode=Release src/PowerTimer/PowerTimer.lpi
+	lazbuild --build-mode=Release src/PowerTimer.lpi
 	```
 
-	The executable is written to `src/PowerTimer/bin/x86_64-win64/PowerTimer.exe`.
+	The executable is written to `src/bin/x86_64-win64/PowerTimer.exe`.
 
 ### Tests
 

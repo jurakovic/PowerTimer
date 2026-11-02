@@ -71,11 +71,11 @@ jobs:
         run: ./tests/bin/x86_64-win64/PowerTimerTests.exe
 
       - name: Build Power Timer
-        run: lazbuild --build-mode=Release src/PowerTimer/PowerTimer.lpi
+        run: lazbuild --build-mode=Release src/PowerTimer.lpi
 
       - name: Upload PowerTimer.exe
         uses: actions/upload-artifact@v7
         with:
           name: PowerTimer-win64
-          path: src/PowerTimer/bin/x86_64-win64/PowerTimer.exe
+          path: src/bin/x86_64-win64/PowerTimer.exe
           if-no-files-found: error

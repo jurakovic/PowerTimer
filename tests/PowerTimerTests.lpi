@@ -34,7 +34,7 @@
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\src\PowerTimer\TimerLogic.pas"/>
+        <Filename Value="..\src\TimerLogic.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
@@ -42,7 +42,7 @@
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="..\src\PowerTimer\PowerActions.pas"/>
+        <Filename Value="..\src\PowerActions.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
@@ -50,7 +50,7 @@
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\src\PowerTimer\AppSettings.pas"/>
+        <Filename Value="..\src\AppSettings.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
     </Units>
@@ -63,7 +63,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\src\PowerTimer"/>
+      <OtherUnitFiles Value="..\src"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
