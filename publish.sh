@@ -132,7 +132,11 @@ function package() {
   fi
   if [[ ! $? -eq 0 ]]; then exit 1; fi
 
-  cd "$release_path" && sha256sum "$archive_name" > checksums.txt && cd - > /dev/null
+  # Written as "<hash>  <name>" on every platform; sha256sum in Git Bash
+  # would mark the file as binary ("<hash> *<name>")
+  local sha256
+  sha256=$(sha256sum "$release_path/$archive_name" | cut -d ' ' -f 1)
+  echo "$sha256  $archive_name" > "$release_path/checksums.txt"
   cat "$release_path/checksums.txt"
 
   echo -e "${Color_Green}Package OK${Color_Off}"
