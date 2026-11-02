@@ -19,6 +19,7 @@ Download `PowerTimer_<version>_win-x64.zip` from the [releases](https://github.c
 
 - Releases marked as pre-release are previews of the next version.
 - `checksums.txt` in each release has the SHA-256 checksum of the zip file.
+- Every run of the [Build](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml) workflow has `PowerTimer.exe` of that commit under *Artifacts*. Its version is the next release with the run number, e.g. `1.0.1-build.42`.
 
 ### Build
 
@@ -42,7 +43,7 @@ lazbuild tests/PowerTimerTests.lpi
 tests/bin/x86_64-win64/PowerTimerTests.exe
 ```
 
-The [Build](.github/workflows/build.yml) workflow builds Power Timer and runs the tests for every push and pull request.
+The [Build](.github/workflows/build.yml) workflow builds Power Timer, runs the tests and uploads `PowerTimer.exe` for every push and pull request.
 
 ### Release
 
