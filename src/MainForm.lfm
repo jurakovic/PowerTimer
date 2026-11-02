@@ -141,6 +141,14 @@ object frmMain: TfrmMain
     TabOrder = 5
     TabStop = False
   end
+  object pnlFocusHolder: TPanel
+    Left = 0
+    Height = 0
+    Top = 0
+    Width = 0
+    BevelOuter = bvNone
+    TabOrder = 7
+  end
   object tmrCountdown: TTimer
     Enabled = False
     Interval = 250

@@ -35,6 +35,7 @@ type
     miClose: TMenuItem;
     miShow: TMenuItem;
     pmTray: TPopupMenu;
+    pnlFocusHolder: TPanel;
     tmrCountdown: TTimer;
     trayIcon: TTrayIcon;
     procedure btnAboutClick(Sender: TObject);
@@ -108,6 +109,11 @@ var
 begin
   FClockMode := btnSetTime.Down;
   trayIcon.Icon.Assign(Application.Icon);
+  // Without an active control the form would focus the hour field. The
+  // empty, zero-size panel holds the focus instead, so nothing looks
+  // selected until the user clicks a control or presses Tab; it is no tab
+  // stop, so Tab goes on to the hour field.
+  ActiveControl := pnlFocusHolder;
   // Filled from PowerActions so that ItemIndex always equals
   // Ord(TPowerAction).
   FillPowerActionList(cbAction.Items);
