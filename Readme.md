@@ -1,5 +1,6 @@
 ## PowerTimer
 
+[![Release](https://img.shields.io/github/v/release/jurakovic/PowerTimer?include_prereleases)](https://github.com/jurakovic/PowerTimer/releases)
 [![Build](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml/badge.svg)](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml)
 
 ![Screenshot](img/screenshot.png)
@@ -14,7 +15,10 @@ A small Windows tool that shuts down, restarts, logs off, locks, suspends (sleep
 
 ### Download
 
-Every build on GitHub Actions uploads `PowerTimer.exe` as the **PowerTimer-win64** artifact (open the latest [Build run](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml) and download it from the *Artifacts* section). It is a single native executable with no runtime dependencies.
+Download `PowerTimer_<version>_win-x64.zip` from the [releases](https://github.com/jurakovic/PowerTimer/releases) and extract `PowerTimer.exe`, a single native executable with no runtime dependencies.
+
+- Releases marked as pre-release are previews of the next version.
+- `checksums.txt` in each release has the SHA-256 checksum of the zip file.
 
 ### Build
 
@@ -27,7 +31,7 @@ Power Timer is written in Free Pascal with [Lazarus](https://www.lazarus-ide.org
 	lazbuild --build-mode=Release src/PowerTimer.lpi
 	```
 
-	The executable is written to `src/bin/x86_64-win64/PowerTimer.exe`.
+	The executable is written to `src/bin/x86_64-win64/PowerTimer.exe`. Its version is 0.0.0.0; release builds carry their version, see [Release](#release).
 
 ### Tests
 
@@ -37,3 +41,15 @@ The unit tests are an fpcunit console application:
 lazbuild tests/PowerTimerTests.lpi
 tests/bin/x86_64-win64/PowerTimerTests.exe
 ```
+
+The [Build](.github/workflows/build.yml) workflow builds Power Timer and runs the tests for every push and pull request.
+
+### Release
+
+Releases are made with the [Publish](.github/workflows/publish.yml) workflow (*Actions* → *Publish* → *Run workflow*), which runs the steps of `publish.sh`:
+
+1. **Build** – runs the tests and builds `PowerTimer.exe` with the version
+2. **Package** – zips `PowerTimer.exe` and writes `checksums.txt`
+3. **Release** – tags the built commit `v<version>` and creates the GitHub release
+
+The version is computed from the latest tag: `master` gives the next release (e.g. `1.0.1`), other branches the next preview (`1.0.1-preview.1`). `publish.sh` also runs locally in Git Bash, see `./publish.sh --help`.

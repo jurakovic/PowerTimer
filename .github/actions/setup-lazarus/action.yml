@@ -1,0 +1,67 @@
+name: Set up Lazarus
+description: >-
+  Installs Lazarus and Free Pascal from the official Windows installer and
+  adds lazbuild and fpc to the PATH. The installer is cached and its SHA-256
+  is checked before it runs.
+
+# The defaults are the versions Power Timer is built with; the workflows use
+# them as they are.
+inputs:
+  lazarus-version:
+    description: Lazarus version
+    default: '4.8'
+  fpc-version:
+    description: Free Pascal version bundled with that Lazarus installer
+    default: '3.2.2'
+  installer-sha256:
+    description: SHA-256 of lazarus-<lazarus-version>-fpc-<fpc-version>-win64.exe
+    default: ed25ee171d55e23cf14e0633159fdd2325efba56e186f8ab817ad3bf97d267d7
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Lazarus installer
+      id: cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}\lazarus-installer
+        key: lazarus-${{ inputs.lazarus-version }}-fpc-${{ inputs.fpc-version }}-win64-${{ inputs.installer-sha256 }}
+
+    - name: Download Lazarus
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: pwsh
+      env:
+        LAZARUS_VERSION: ${{ inputs.lazarus-version }}
+        FPC_VERSION: ${{ inputs.fpc-version }}
+      run: |
+        $installer = "lazarus-$env:LAZARUS_VERSION-fpc-$env:FPC_VERSION-win64.exe"
+        $dir = Join-Path $env:RUNNER_TEMP 'lazarus-installer'
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        $url = "https://downloads.sourceforge.net/project/lazarus/Lazarus%20Windows%2064%20bits/Lazarus%20$env:LAZARUS_VERSION/$installer"
+        curl.exe --fail --silent --show-error --location --retry 5 --retry-delay 10 `
+          --output (Join-Path $dir $installer) $url
+
+    - name: Install Lazarus
+      shell: pwsh
+      env:
+        LAZARUS_VERSION: ${{ inputs.lazarus-version }}
+        FPC_VERSION: ${{ inputs.fpc-version }}
+        INSTALLER_SHA256: ${{ inputs.installer-sha256 }}
+        LAZARUS_DIR: C:\lazarus
+      run: |
+        $installer = Join-Path $env:RUNNER_TEMP "lazarus-installer\lazarus-$env:LAZARUS_VERSION-fpc-$env:FPC_VERSION-win64.exe"
+        $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash
+        if ($hash -ne $env:INSTALLER_SHA256) {
+          throw "Unexpected SHA-256 of ${installer}: $hash"
+        }
+        $setup = Start-Process -FilePath $installer -Wait -PassThru `
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$env:LAZARUS_DIR"
+        if ($setup.ExitCode -ne 0) { throw "Lazarus setup failed with exit code $($setup.ExitCode)" }
+        Add-Content -Path $env:GITHUB_PATH -Value $env:LAZARUS_DIR
+        Add-Content -Path $env:GITHUB_PATH -Value "$env:LAZARUS_DIR\fpc\$env:FPC_VERSION\bin\x86_64-win64"
+
+    - name: Show versions
+      shell: pwsh
+      run: |
+        lazbuild --version
+        fpc -iV

@@ -19,6 +19,9 @@ backup/
 *.lrt
 *.bak
 
+# Output of publish.sh package
+/release/
+
 # Lazarus user-specific session files
 *.lps
 
