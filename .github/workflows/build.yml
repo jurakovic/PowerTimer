@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LAZARUS_VERSION: "4.8"
+  LAZARUS_INSTALLER: lazarus-4.8-fpc-3.2.2-win64.exe
+  LAZARUS_INSTALLER_SHA256: ed25ee171d55e23cf14e0633159fdd2325efba56e186f8ab817ad3bf97d267d7
+  LAZARUS_DIR: C:\lazarus
+  FPC_BIN_DIR: C:\lazarus\fpc\3.2.2\bin\x86_64-win64
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Cache Lazarus installer
+        id: cache-lazarus
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}\lazarus-installer
+          key: ${{ env.LAZARUS_INSTALLER }}-${{ env.LAZARUS_INSTALLER_SHA256 }}
+
+      - name: Download Lazarus
+        if: steps.cache-lazarus.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'lazarus-installer'
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          $url = "https://downloads.sourceforge.net/project/lazarus/Lazarus%20Windows%2064%20bits/Lazarus%20$env:LAZARUS_VERSION/$env:LAZARUS_INSTALLER"
+          curl.exe --fail --silent --show-error --location --retry 5 --retry-delay 10 `
+            --output (Join-Path $dir $env:LAZARUS_INSTALLER) $url
+
+      - name: Install Lazarus
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP "lazarus-installer\$env:LAZARUS_INSTALLER"
+          $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash
+          if ($hash -ne $env:LAZARUS_INSTALLER_SHA256) {
+            throw "Unexpected SHA-256 of $env:LAZARUS_INSTALLER`: $hash"
+          }
+          $setup = Start-Process -FilePath $installer -Wait -PassThru `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$env:LAZARUS_DIR"
+          if ($setup.ExitCode -ne 0) { throw "Lazarus setup failed with exit code $($setup.ExitCode)" }
+          Add-Content -Path $env:GITHUB_PATH -Value $env:LAZARUS_DIR
+          Add-Content -Path $env:GITHUB_PATH -Value $env:FPC_BIN_DIR
+
+      - name: Show versions
+        run: |
+          lazbuild --version
+          fpc -iV
+
+      - name: Build tests
+        run: lazbuild tests/PowerTimerTests.lpi
+
+      - name: Run tests
+        run: ./tests/bin/x86_64-win64/PowerTimerTests.exe
+
+      - name: Build Power Timer
+        run: lazbuild --build-mode=Release src/PowerTimer/PowerTimer.lpi
+
+      - name: Upload PowerTimer.exe
+        uses: actions/upload-artifact@v7
+        with:
+          name: PowerTimer-win64
+          path: src/PowerTimer/bin/x86_64-win64/PowerTimer.exe
+          if-no-files-found: error
