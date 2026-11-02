@@ -43,7 +43,7 @@ lazbuild tests/PowerTimerTests.lpi
 tests/bin/x86_64-win64/PowerTimerTests.exe
 ```
 
-The [Build](.github/workflows/build.yml) workflow builds Power Timer, runs the tests and uploads `PowerTimer.exe` for every push and pull request.
+The [Build](.github/workflows/build.yml) workflow builds Power Timer, runs the tests and uploads `PowerTimer.exe` for pushes to `master` that change the application or how it is built, and when run from the *Actions* tab (*Build* → *Run workflow*, for any branch).
 
 ### Release
 
