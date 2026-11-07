@@ -13,7 +13,10 @@ VERSION="auto"
 BUMP_TYPE="patch"
 PREVIEW="auto"
 UNATTENDED="false"
-BASE_VER="1"
+# The major version stream: "auto" is the major of the latest release or
+# preview tag, but never below FIRST_MAJOR, the major the versions start at
+BASE_VER="auto"
+FIRST_MAJOR="1"
 
 APP_LPI="src/PowerTimer.lpi"
 TESTS_LPI="tests/PowerTimerTests.lpi"
@@ -214,7 +217,15 @@ function read_args() {
         ;;
       "-M" | "--base_ver")
         shift
-        BASE_VER="$1"
+        # Empty is auto, as for the version
+        if [ -z "$1" ] || [ "$1" = "auto" ]; then
+            BASE_VER="auto"
+        elif [[ "$1" =~ ^(0|[1-9][0-9]*)$ ]]; then
+            BASE_VER="$1"
+        else
+            invalid_argument "$1" "auto 1 2 ..."
+            exit 1
+        fi
         ;;
       *)
         if is_in_array "$1" "${_command_values[@]}"; then
@@ -227,6 +238,10 @@ function read_args() {
     esac
     shift
   done
+
+  if [ "$BASE_VER" = "auto" ]; then
+    BASE_VER=$(latest_major)
+  fi
 
   if [ -n "$GITHUB_REF_NAME" ]; then
     BRANCH="$GITHUB_REF_NAME"
@@ -331,7 +346,7 @@ function help() {
   echo "  -v, --version <VERSION>        auto*, x.y.z, x.y.z-preview.N"
   echo "  -b, --bump_type <BUMP_TYPE>    major, minor, patch*"
   echo "  -p, --preview <PREVIEW>        auto*, true, false"
-  echo "  -M, --base_ver <BASE_VER>      1*, 2, 3, ..."
+  echo "  -M, --base_ver <BASE_VER>      auto*, 1, 2, ..."
   echo "  -u, --unattended <UNATTENDED>  true, false*"
   echo "  -h, --help"
   echo "                                 * Default value"
@@ -342,7 +357,21 @@ function help() {
   echo "  ./publish.sh package -v 1.2.0"
   echo "  ./publish.sh version"
   echo "  ./publish.sh version -b minor"
-  echo "  ./publish.sh version -M 2"
+  echo "  ./publish.sh version -M 1"
+}
+
+# The highest major of the release and preview tags (v1.2.3, v1.2.3-preview.1),
+# or FIRST_MAJOR when there is none or it is lower
+function latest_major() {
+  local major
+  major=$(git tag --list 'v*' \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$' \
+    | sed -E 's/^v([0-9]+)\..*/\1/' | sort -n | tail -1)
+  if [ -z "$major" ] || ((10#$major < FIRST_MAJOR)); then
+    echo "$FIRST_MAJOR"
+  else
+    echo "$((10#$major))"
+  fi
 }
 
 function is_in_array() {
