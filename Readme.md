@@ -53,4 +53,4 @@ Releases are made with the [Publish](.github/workflows/publish.yml) workflow (*A
 2. **Package** – zips `PowerTimer.exe` and writes `checksums.txt`
 3. **Release** – tags the built commit `v<version>` and creates the GitHub release
 
-The version is computed from the latest tag of the current major version: `master` gives the next release (e.g. `1.0.1`), other branches the next preview (`1.0.1-preview.1`). *Base Ver* picks an older major version instead, e.g. `1` for a fix of 1.x after 2.0.0. `publish.sh` also runs locally in Git Bash, see `./publish.sh --help`.
+The version is computed from the latest tag of the current major version: `master` gives the next release (e.g. `1.0.1`), other branches the next preview (`1.0.1-preview.1`). While a preview is open, a *Bump Type* that doesn't pass it continues it (*patch*, the default, always does), and one that passes it starts a new version: *minor* after `1.0.1-preview.2` gives `1.1.0`, or `1.1.0-preview.1` from another branch. *Base Ver* picks an older major version instead, e.g. `1` for a fix of 1.x after 2.0.0. `publish.sh` also runs locally in Git Bash, see `./publish.sh --help`.

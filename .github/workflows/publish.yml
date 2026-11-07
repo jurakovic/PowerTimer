@@ -6,7 +6,9 @@ name: Publish
 # - The version is computed from the latest tag of the current major (v1.x.y
 #   until there is a v2 tag; Base Ver picks an older one): master gives the
 #   next release (1.0.1), other branches the next preview (1.0.1-preview.1).
-#   Bump Type picks the part that is increased; Version overrides it all.
+#   Bump Type picks the part that is increased. While a preview is open, a
+#   bump it does not pass continues it (a patch always does), and one that
+#   passes it starts a new version. Version overrides it all.
 # - PowerTimer.exe carries the version: x.y.z.0 as file version and the whole
 #   version as product version.
 # - The release is tagged v<version> on the built commit and published on
@@ -42,7 +44,7 @@ on:
         default: 'auto'
         type: string
       bump_type:
-        description: 'Bump Type (ignored when version is explicit)'
+        description: 'Bump Type (ignored when version is explicit; continues an open preview it does not pass)'
         required: false
         default: 'patch'
         type: choice

@@ -287,6 +287,17 @@ function read_args() {
         version_compare "$preview_main" "${latest_stable:-0.0.0}"
         if [[ $? -eq 1 ]]; then
           current_version="$latest_preview"  # preview cycle is ahead of stable
+
+          # A bump past the open preview starts a new version from the latest
+          # stable; one the preview covers (a patch always does) continues it
+          if [[ -n "$latest_stable" ]]; then
+            local bumped
+            bumped=$(bump_version_main "$latest_stable" "$BUMP_TYPE")
+            version_compare "$bumped" "$preview_main"
+            if [[ $? -eq 1 ]]; then
+              current_version="$latest_stable"
+            fi
+          fi
         fi
       fi
       VERSION=$(bump_version "$current_version" "$BUMP_TYPE" "$PREVIEW")
