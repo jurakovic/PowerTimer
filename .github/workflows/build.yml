@@ -1,8 +1,9 @@
 name: Build
 
-# Builds Power Timer, runs the tests and uploads PowerTimer.exe for pushes
-# to master that change the application, its tests or how they are built,
-# and when run from the Actions tab ("Run workflow", for any branch).
+# Builds Power Timer, runs the tests and uploads PowerTimer.exe, zipped as
+# PowerTimer_v<version>_win-x64 like the release, for pushes to master that
+# change the application, its tests or how they are built, and when run from
+# the Actions tab ("Run workflow", for any branch).
 #
 # The version of PowerTimer.exe is <next release>-build.<run number>, e.g.
 # 1.0.1-build.42: the version that the Publish workflow would release from
@@ -59,12 +60,13 @@ jobs:
       - name: Build and test
         run: ./publish.sh build -v "$VERSION" -u true
 
-      # The executable itself, not zipped; the artifact is named after it
+      # Named like the release's zip, which it matches when downloaded:
+      # PowerTimer_v<version>_win-x64.zip with PowerTimer.exe inside
       - name: Upload PowerTimer.exe
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
+          name: PowerTimer_v${{ env.VERSION }}_win-x64
           path: src/bin/x86_64-win64/PowerTimer.exe
-          archive: false
           if-no-files-found: error
 
       - name: Summary

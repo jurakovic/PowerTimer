@@ -102,7 +102,7 @@ function set_version_info() {
 
 function package() {
   local release_path="release"
-  local archive_name="PowerTimer_${VERSION}_${ARCH}.zip"
+  local archive_name="PowerTimer_v${VERSION}_${ARCH}.zip"
 
   if [ ! -f "$WIN_EXE" ]; then
     echo "Error. $WIN_EXE not found, run the build command on Windows first."

@@ -15,11 +15,11 @@ A small Windows tool that shuts down, restarts, logs off, locks, suspends (sleep
 
 ### Download
 
-Download `PowerTimer_<version>_win-x64.zip` from the [releases](https://github.com/jurakovic/PowerTimer/releases) and extract `PowerTimer.exe`, a single native executable with no runtime dependencies.
+Download `PowerTimer_v<version>_win-x64.zip` from the [releases](https://github.com/jurakovic/PowerTimer/releases) and extract `PowerTimer.exe`, a single native executable with no runtime dependencies.
 
 - Releases marked as pre-release are previews of the next version.
 - `checksums.txt` in each release has the SHA-256 checksum of the zip file.
-- Every run of the [Build](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml) workflow has `PowerTimer.exe` of that commit under *Artifacts*. Its version is the next release with the run number, e.g. `1.0.1-build.42`.
+- Every run of the [Build](https://github.com/jurakovic/PowerTimer/actions/workflows/build.yml) workflow has `PowerTimer.exe` of that commit under *Artifacts*, zipped like a release: `PowerTimer_v<version>_win-x64.zip`. Its version is the next release with the run number, e.g. `1.0.1-build.42`.
 
 ### Build
 
@@ -43,7 +43,7 @@ lazbuild tests/PowerTimerTests.lpi
 tests/bin/x86_64-win64/PowerTimerTests.exe
 ```
 
-The [Build](.github/workflows/build.yml) workflow builds Power Timer, runs the tests and uploads `PowerTimer.exe` for pushes to `master` that change the application or how it is built, and when run from the *Actions* tab (*Build* → *Run workflow*, for any branch).
+The [Build](.github/workflows/build.yml) workflow builds Power Timer, runs the tests and uploads `PowerTimer.exe`, zipped, for pushes to `master` that change the application or how it is built, and when run from the *Actions* tab (*Build* → *Run workflow*, for any branch).
 
 ### Release
 

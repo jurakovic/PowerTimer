@@ -12,8 +12,8 @@ name: Publish
 # - PowerTimer.exe carries the version: x.y.z.0 as file version and the whole
 #   version as product version.
 # - The release is tagged v<version> on the built commit and published on
-#   GitHub with PowerTimer_<version>_win-x64.zip and its SHA-256 checksum.
-#   Previews are marked as pre-releases.
+#   GitHub as v<version>, with PowerTimer_v<version>_win-x64.zip and its
+#   SHA-256 checksum. Previews are marked as pre-releases.
 
 on:
   workflow_dispatch:
@@ -156,7 +156,7 @@ jobs:
         if: ${{ inputs.package }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: PowerTimer-${{ env.VERSION }}
+          name: PowerTimer_v${{ env.VERSION }}
           path: release/*
           if-no-files-found: error
 
@@ -186,7 +186,7 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: PowerTimer-${{ needs.build.outputs.version }}
+          name: PowerTimer_v${{ needs.build.outputs.version }}
           path: release
 
       - name: Git Tag
@@ -205,6 +205,6 @@ jobs:
           esac
           gh release create "v$VERSION" release/* \
             --verify-tag \
-            --title "Power Timer $VERSION" \
+            --title "v$VERSION" \
             --generate-notes \
             "${prerelease[@]}"
