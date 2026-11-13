@@ -13,7 +13,7 @@ object frmAbout: TfrmAbout
   ClientWidth = 420
   DesignTimePPI = 96
   Font.Height = -12
-  Font.Name = 'Tahoma'
+  Font.Name = 'Segoe UI'
   Position = poOwnerFormCenter
   OnCreate = FormCreate
   LCLVersion = '4.8.0.0'
@@ -36,7 +36,7 @@ object frmAbout: TfrmAbout
     BorderSpacing.Left = 16
     Caption = 'Power Timer'
     Font.Height = -14
-    Font.Name = 'Tahoma'
+    Font.Name = 'Segoe UI'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -64,7 +64,7 @@ object frmAbout: TfrmAbout
     Caption = 'https://github.com/jurakovic/PowerTimer'
     Font.Color = clHotLight
     Font.Height = -12
-    Font.Name = 'Tahoma'
+    Font.Name = 'Segoe UI'
     Font.Style = [fsUnderline]
     ParentFont = False
     OnClick = lblLinkClick
