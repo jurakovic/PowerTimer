@@ -6,8 +6,9 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, Menus, ActnList, LCLType,
-  // After StdCtrls: the labels hide their access keys until Alt is pressed
+  ExtCtrls, Menus, ActnList, LCLType, LMessages,
+  // After StdCtrls: the labels underline their access keys only while Alt
+  // is held
   AccessKeyLabel,
   TimerLogic, PowerActions, AppSettings, Countdown;
 
@@ -53,6 +54,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormWindowStateChange(Sender: TObject);
     procedure lblAboutClick(Sender: TObject);
     procedure lblOptionsClick(Sender: TObject);
@@ -65,6 +67,8 @@ type
     procedure tmrCountdownTimer(Sender: TObject);
     procedure tmrStatusTimer(Sender: TObject);
     procedure trayIconClick(Sender: TObject);
+  protected
+    procedure WMActivate(var Message: TLMActivate); message LM_ACTIVATE;
   private
     FClockMode: Boolean;
     FCountdown: TCountdown;
@@ -154,11 +158,30 @@ end;
 procedure TfrmMain.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
+  // The links underline their access keys while Alt is held
+  if Key = VK_MENU then
+    RepaintAccessKeys(Self);
   if (Key = VK_ESCAPE) and FCountdown.Running then
   begin
     FCountdown.Stop;
     Key := 0;
   end;
+end;
+
+procedure TfrmMain.FormKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_MENU then
+    RepaintAccessKeys(Self);
+end;
+
+{ Alt may have been released in another window, e.g. after Alt+Tab or in
+  the dialog that Alt+O opened, so the links are drawn again whenever the
+  window is activated or deactivated. }
+procedure TfrmMain.WMActivate(var Message: TLMActivate);
+begin
+  inherited;
+  RepaintAccessKeys(Self);
 end;
 
 procedure TfrmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);

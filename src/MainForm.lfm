@@ -18,6 +18,7 @@ object frmMain: TfrmMain
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
+  OnKeyUp = FormKeyUp
   OnWindowStateChange = FormWindowStateChange
   LCLVersion = '4.8.0.0'
   object shpModeFrame: TShape
