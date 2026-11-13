@@ -12,6 +12,7 @@ type
   TTimerLogicTests = class(TTestCase)
   private
     procedure CheckParts(const AExpected, AActual: TTimeParts);
+    procedure CheckDateTime(AExpected, AActual: TDateTime);
   published
     procedure SecondsConversion_RoundTrips;
     procedure SecondsToTimeParts_NegativeIsZero;
@@ -19,6 +20,10 @@ type
     procedure MSecsUntilClockTime_LaterToday;
     procedure MSecsUntilClockTime_EarlierMeansTomorrow;
     procedure MSecsUntilClockTime_NowMeansTomorrow;
+    procedure NextOccurrence_LaterToday;
+    procedure NextOccurrence_EarlierMeansTomorrow;
+    procedure NextOccurrence_NowMeansTomorrow;
+    procedure SecondsUntil_RoundsUp;
     procedure RemainingSeconds_RoundsUp;
     procedure ClampDelayHours_Limits;
     procedure DefaultCountdown_UsesDelay;
@@ -33,6 +38,14 @@ begin
   AssertEquals('hours', AExpected.Hours, AActual.Hours);
   AssertEquals('minutes', AExpected.Minutes, AActual.Minutes);
   AssertEquals('seconds', AExpected.Seconds, AActual.Seconds);
+end;
+
+procedure TTimerLogicTests.CheckDateTime(AExpected, AActual: TDateTime);
+begin
+  AssertTrue(Format('expected %s, got %s', [
+    FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AExpected),
+    FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AActual)]),
+    SameDateTime(AExpected, AActual));
 end;
 
 procedure TTimerLogicTests.SecondsConversion_RoundTrips;
@@ -83,6 +96,39 @@ begin
   NowValue := EncodeDateTime(2024, 3, 1, 12, 34, 56, 400);
   AssertEquals(MSecsPerDay - 400,
     MSecsUntilClockTime(NowValue, MakeTimeParts(12, 34, 56)));
+end;
+
+procedure TTimerLogicTests.NextOccurrence_LaterToday;
+begin
+  CheckDateTime(EncodeDateTime(2024, 3, 1, 11, 30, 0, 0),
+    NextOccurrence(EncodeDateTime(2024, 3, 1, 10, 0, 0, 0), MakeTimeParts(11, 30, 0)));
+end;
+
+procedure TTimerLogicTests.NextOccurrence_EarlierMeansTomorrow;
+begin
+  CheckDateTime(EncodeDateTime(2024, 3, 2, 1, 0, 0, 0),
+    NextOccurrence(EncodeDateTime(2024, 3, 1, 22, 0, 0, 0), MakeTimeParts(1, 0, 0)));
+end;
+
+procedure TTimerLogicTests.NextOccurrence_NowMeansTomorrow;
+begin
+  CheckDateTime(EncodeDateTime(2024, 3, 2, 12, 34, 56, 0),
+    NextOccurrence(EncodeDateTime(2024, 3, 1, 12, 34, 56, 0), MakeTimeParts(12, 34, 56)));
+  CheckDateTime(EncodeDateTime(2024, 3, 2, 12, 34, 56, 0),
+    NextOccurrence(EncodeDateTime(2024, 3, 1, 12, 34, 56, 400), MakeTimeParts(12, 34, 56)));
+end;
+
+procedure TTimerLogicTests.SecondsUntil_RoundsUp;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 12, 0, 0, 0);
+  AssertEquals('1 ms', 1, SecondsUntil(NowValue, IncMilliSecond(NowValue, 1)));
+  AssertEquals('1000 ms', 1, SecondsUntil(NowValue, IncMilliSecond(NowValue, 1000)));
+  AssertEquals('1001 ms', 2, SecondsUntil(NowValue, IncMilliSecond(NowValue, 1001)));
+  AssertEquals('1 h', 3600, SecondsUntil(NowValue, IncHour(NowValue)));
+  AssertEquals('now', 0, SecondsUntil(NowValue, NowValue));
+  AssertEquals('past', 0, SecondsUntil(NowValue, IncSecond(NowValue, -5)));
 end;
 
 procedure TTimerLogicTests.RemainingSeconds_RoundsUp;

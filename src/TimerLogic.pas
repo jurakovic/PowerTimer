@@ -38,10 +38,19 @@ function TimePartsToSeconds(const AParts: TTimeParts): Integer;
   24:00:00. }
 function SecondsToTimeParts(ATotalSeconds: Integer): TTimeParts;
 
+{ The next occurrence of the wall clock time AClock after ANow, as a local
+  date and time: today at AClock, or tomorrow at AClock when that is not at
+  least 1 ms in the future. }
+function NextOccurrence(ANow: TDateTime; const AClock: TTimeParts): TDateTime;
+
 { Milliseconds from ANow until the next occurrence of the wall clock time
   AClock. A time that is not in the future today means the same time
   tomorrow, so the result is always in 1..MSecsPerDay. }
 function MSecsUntilClockTime(ANow: TDateTime; const AClock: TTimeParts): Int64;
+
+{ Whole seconds from ANow until ATarget, both local times, rounded up as
+  RemainingSeconds does; 0 when ATarget is not in the future. }
+function SecondsUntil(ANow, ATarget: TDateTime): Integer;
 
 { Whole seconds left until ADeadline (both in milliseconds, e.g. from
   GetTickCount64), rounded up so 00:00:00 is only shown when it is time. }
@@ -100,17 +109,29 @@ begin
   Result.Seconds := ATotalSeconds mod 60;
 end;
 
-function MSecsUntilClockTime(ANow: TDateTime; const AClock: TTimeParts): Int64;
-var
-  Target: TDateTime;
+function NextOccurrence(ANow: TDateTime; const AClock: TTimeParts): TDateTime;
 begin
-  Target := DateOf(ANow) + EncodeTime(
+  Result := DateOf(ANow) + EncodeTime(
     Clamp(AClock.Hours, 0, MaxHour),
     Clamp(AClock.Minutes, 0, MaxMinute),
     Clamp(AClock.Seconds, 0, MaxSecond), 0);
-  Result := Round((Target - ANow) * MSecsPerDay);
-  if Result <= 0 then
-    Inc(Result, MSecsPerDay);
+  if Round((Result - ANow) * MSecsPerDay) <= 0 then
+    Result := IncDay(Result);
+end;
+
+function MSecsUntilClockTime(ANow: TDateTime; const AClock: TTimeParts): Int64;
+begin
+  Result := Round((NextOccurrence(ANow, AClock) - ANow) * MSecsPerDay);
+end;
+
+function SecondsUntil(ANow, ATarget: TDateTime): Integer;
+var
+  MSecs: Int64;
+begin
+  MSecs := Round((ATarget - ANow) * MSecsPerDay);
+  if MSecs <= 0 then
+    Exit(0);
+  Result := (MSecs + MSecsPerSecond - 1) div MSecsPerSecond;
 end;
 
 function RemainingSeconds(ANowTicks, ADeadlineTicks: QWord): Integer;
