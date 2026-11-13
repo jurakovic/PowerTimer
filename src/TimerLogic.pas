@@ -1,8 +1,8 @@
 unit TimerLogic;
 
-{ Pure time calculations used by the main form: the time arithmetic and the
-  default delay. The input rules of the time fields are in TimeFields. Has no
-  UI or OS dependencies so it can be unit tested on any platform. }
+{ Pure time calculations: the time arithmetic and the default delay. The
+  input rules of the time fields are in TimeFields. Has no UI or OS
+  dependencies so it can be unit tested on any platform. }
 
 {$mode objfpc}{$H+}
 
