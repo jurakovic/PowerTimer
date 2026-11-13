@@ -1,8 +1,9 @@
 unit CountdownTests;
 
 { Drives TCountdown with its own times and tick counts. The events are
-  recorded in a log, so their order is checked too: 'change;' for OnChange
-  and 'run:<ordinal>;' for OnRunAction. }
+  recorded in a log, so their order is checked too: 'change:1;' for
+  OnChange while running and 'change:0;' when not, since the main form's
+  handler reads Running, and 'run:<ordinal>;' for OnRunAction. }
 
 {$mode objfpc}{$H+}
 
@@ -42,7 +43,7 @@ implementation
 procedure TCountdownTests.CountdownChange(Sender: TObject);
 begin
   AssertTrue('sender', Sender = FCountdown);
-  FLog := FLog + 'change;';
+  FLog := FLog + Format('change:%d;', [Ord(FCountdown.Running)]);
 end;
 
 procedure TCountdownTests.CountdownRunAction(AAction: TPowerAction);
@@ -70,7 +71,7 @@ begin
     paLock, FNow, 1000));
   AssertTrue('running', FCountdown.Running);
   AssertEquals('remaining', 10, FCountdown.RemainingSeconds(FNow, 1000));
-  AssertEquals('log', 'change;', FLog);
+  AssertEquals('log', 'change:1;', FLog);
 end;
 
 procedure TCountdownTests.Tick_BeforeTheEndRunsNothing;
@@ -79,7 +80,7 @@ begin
   FCountdown.Tick(FNow, 10999);
   AssertTrue('running', FCountdown.Running);
   AssertEquals('remaining', 1, FCountdown.RemainingSeconds(FNow, 10999));
-  AssertEquals('log', 'change;', FLog);
+  AssertEquals('log', 'change:1;', FLog);
 end;
 
 procedure TCountdownTests.Tick_AtTheEndStopsAndRunsTheAction;
@@ -88,7 +89,7 @@ begin
   FCountdown.Tick(FNow, 11000);
   AssertFalse('running', FCountdown.Running);
   AssertEquals('remaining', 0, FCountdown.RemainingSeconds(FNow, 11000));
-  AssertEquals('log', 'change;change;run:3;', FLog);
+  AssertEquals('log', 'change:1;change:0;run:3;', FLog);
 end;
 
 procedure TCountdownTests.Tick_AfterTheEndDoesNothingMore;
@@ -96,7 +97,7 @@ begin
   FCountdown.Start(cmCountdown, MakeTimeParts(0, 0, 10), paLock, FNow, 1000);
   FCountdown.Tick(FNow, 11000);
   FCountdown.Tick(FNow, 12000);
-  AssertEquals('log', 'change;change;run:3;', FLog);
+  AssertEquals('log', 'change:1;change:0;run:3;', FLog);
 end;
 
 procedure TCountdownTests.Start_ClockTimeWaitsUntilThatTime;
@@ -123,7 +124,7 @@ begin
   AssertFalse('running', FCountdown.Running);
   AssertEquals('remaining', 0, FCountdown.RemainingSeconds(FNow, 1000));
   FCountdown.Tick(FNow, 20000);
-  AssertEquals('log', 'change;change;', FLog);
+  AssertEquals('log', 'change:1;change:0;', FLog);
 end;
 
 procedure TCountdownTests.Stop_WhenIdleDoesNothing;
