@@ -13,6 +13,7 @@ type
   private
     procedure CheckParts(const AExpected, AActual: TTimeParts);
     procedure CheckDateTime(AExpected, AActual: TDateTime);
+    function TestFormat: TFormatSettings;
   published
     procedure SecondsConversion_RoundTrips;
     procedure SecondsToTimeParts_NegativeIsZero;
@@ -31,9 +32,24 @@ type
     procedure DefaultCountdown_UsesDelay;
     procedure DefaultClockTime_AddsDelay;
     procedure FormatRemaining_Formats;
+    procedure FormatDuration_Formats;
+    procedure FormatEndTime_SameDay;
+    procedure FormatEndTime_NextDayIsTomorrow;
+    procedure FormatEndTime_LaterDayShowsTheDate;
+    procedure FormatEndTime_WithSeconds;
+    procedure CountdownStatus_CountdownIdle;
+    procedure CountdownStatus_ZeroCountdownIsRightAway;
+    procedure CountdownStatus_ClockIdle;
+    procedure CountdownStatus_ClockIdleTomorrow;
+    procedure CountdownStatus_Running;
+    procedure CountdownStatus_RunningOverMidnight;
   end;
 
 implementation
+
+const
+  // UTF-8 encoded U+00B7, as in the status texts
+  Dot = #$C2#$B7;
 
 procedure TTimerLogicTests.CheckParts(const AExpected, AActual: TTimeParts);
 begin
@@ -48,6 +64,18 @@ begin
     FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AExpected),
     FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AActual)]),
     SameDateTime(AExpected, AActual));
+end;
+
+{ A fixed format, so the results don't depend on the locale the tests run
+  in. }
+function TTimerLogicTests.TestFormat: TFormatSettings;
+begin
+  Result := DefaultFormatSettings;
+  Result.ShortTimeFormat := 'hh:nn';
+  Result.LongTimeFormat := 'hh:nn:ss';
+  Result.TimeSeparator := ':';
+  Result.ShortDateFormat := 'dd.mm.yyyy';
+  Result.DateSeparator := '.';
 end;
 
 procedure TTimerLogicTests.SecondsConversion_RoundTrips;
@@ -187,6 +215,111 @@ begin
   AssertEquals('00 h 00 m 00 s', FormatRemaining(0));
   AssertEquals('01 h 05 m 09 s', FormatRemaining(3909));
   AssertEquals('23 h 59 m 59 s', FormatRemaining(86399));
+end;
+
+procedure TTimerLogicTests.FormatDuration_Formats;
+begin
+  AssertEquals('0', '00:00:00', FormatDuration(0));
+  AssertEquals('59', '00:00:59', FormatDuration(59));
+  AssertEquals('3600', '01:00:00', FormatDuration(3600));
+  AssertEquals('86399', '23:59:59', FormatDuration(86399));
+  AssertEquals('86400', '24:00:00', FormatDuration(86400));
+  AssertEquals('-5', '00:00:00', FormatDuration(-5));
+end;
+
+procedure TTimerLogicTests.FormatEndTime_SameDay;
+begin
+  AssertEquals('at 23:45', FormatEndTime(EncodeDateTime(2024, 3, 1, 22, 45, 0, 0),
+    EncodeDateTime(2024, 3, 1, 23, 45, 0, 0), False, TestFormat));
+end;
+
+procedure TTimerLogicTests.FormatEndTime_NextDayIsTomorrow;
+begin
+  AssertEquals('tomorrow at 01:00', FormatEndTime(
+    EncodeDateTime(2024, 3, 1, 23, 30, 0, 0),
+    EncodeDateTime(2024, 3, 2, 1, 0, 0, 0), False, TestFormat));
+end;
+
+procedure TTimerLogicTests.FormatEndTime_LaterDayShowsTheDate;
+begin
+  AssertEquals('on 03.03.2024 at 01:00', FormatEndTime(
+    EncodeDateTime(2024, 3, 1, 23, 30, 0, 0),
+    EncodeDateTime(2024, 3, 3, 1, 0, 0, 0), False, TestFormat));
+end;
+
+procedure TTimerLogicTests.FormatEndTime_WithSeconds;
+var
+  NowValue, EndValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 12, 0, 0, 0);
+  EndValue := EncodeDateTime(2024, 3, 1, 14, 0, 30, 0);
+  AssertEquals('with', 'at 14:00:30', FormatEndTime(NowValue, EndValue, True, TestFormat));
+  AssertEquals('without', 'at 14:00', FormatEndTime(NowValue, EndValue, False, TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_CountdownIdle;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 22, 45, 0, 0);
+  AssertEquals('Shutdown at 23:45 if started now ' + Dot + ' in 01:00:00',
+    CountdownStatus(skCountdownIdle, 'Shutdown', NowValue, IncHour(NowValue),
+      SecondsPerHour, False, TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_ZeroCountdownIsRightAway;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 22, 45, 0, 0);
+  AssertEquals('Shutdown right away if started now',
+    CountdownStatus(skCountdownIdle, 'Shutdown', NowValue, NowValue, 0, False,
+      TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_ClockIdle;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 14, 30, 0, 0);
+  AssertEquals('Restart at 15:00 ' + Dot + ' in 00:30:00',
+    CountdownStatus(skClockIdle, 'Restart', NowValue,
+      EncodeDateTime(2024, 3, 1, 15, 0, 0, 0), 30 * SecondsPerMinute, False,
+      TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_ClockIdleTomorrow;
+var
+  NowValue: TDateTime;
+begin
+  // 14:00 entered at 14:30, e.g. a typo for 15:00
+  NowValue := EncodeDateTime(2024, 3, 1, 14, 30, 0, 0);
+  AssertEquals('Shutdown tomorrow at 14:00 ' + Dot + ' in 23:30:00',
+    CountdownStatus(skClockIdle, 'Shutdown', NowValue,
+      EncodeDateTime(2024, 3, 2, 14, 0, 0, 0), 23 * SecondsPerHour + 30 * SecondsPerMinute,
+      False, TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_Running;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 23, 2, 43, 0);
+  AssertEquals('Shutdown at 23:45 ' + Dot + ' 00:42:17 left',
+    CountdownStatus(skRunning, 'Shutdown', NowValue,
+      EncodeDateTime(2024, 3, 1, 23, 45, 0, 0), 42 * SecondsPerMinute + 17, False,
+      TestFormat));
+end;
+
+procedure TTimerLogicTests.CountdownStatus_RunningOverMidnight;
+var
+  NowValue: TDateTime;
+begin
+  NowValue := EncodeDateTime(2024, 3, 1, 14, 30, 1, 0);
+  AssertEquals('Hibernate tomorrow at 14:00:30 ' + Dot + ' 23:30:29 left',
+    CountdownStatus(skRunning, 'Hibernate', NowValue,
+      EncodeDateTime(2024, 3, 2, 14, 0, 30, 0), 23 * SecondsPerHour + 30 * SecondsPerMinute + 29,
+      True, TestFormat));
 end;
 
 initialization

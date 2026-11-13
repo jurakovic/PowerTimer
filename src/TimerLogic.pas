@@ -1,12 +1,16 @@
 unit TimerLogic;
 
-{ Pure time calculations: the time arithmetic and the default delay. The
-  input rules of the time fields are in TimeFields. Has no UI or OS
-  dependencies so it can be unit tested on any platform. }
+{ Pure time calculations: the time arithmetic, the default delay and the
+  texts of the status bar. The input rules of the time fields are in
+  TimeFields. Has no UI or OS dependencies so it can be unit tested on any
+  platform. }
 
 {$mode objfpc}{$H+}
 
 interface
+
+uses
+  SysUtils;
 
 const
   MaxHour = 23;
@@ -31,6 +35,10 @@ type
     Minutes: Integer;
     Seconds: Integer;
   end;
+
+  { What the status bar describes: the countdown that Start would begin in
+    Countdown mode or in At time mode, or the one that is running. }
+  TStatusKind = (skCountdownIdle, skClockIdle, skRunning);
 
 function MakeTimeParts(AHours, AMinutes, ASeconds: Integer): TTimeParts;
 
@@ -78,16 +86,57 @@ function DefaultClockTime(ANow: TDateTime; ADelayHours: Integer): TTimeParts;
 { Human readable duration, e.g. '01 h 05 m 00 s'. }
 function FormatRemaining(ATotalSeconds: Integer): string;
 
+{ A duration as hours, minutes and seconds, e.g. '01:12:30'. Negative
+  durations are treated as zero, and the hours can go over 23
+  ('24:00:00'). }
+function FormatDuration(ATotalSeconds: Integer): string;
+
+{ When AEnd is, seen from ANow, in the time format of AFormat: 'at 23:45',
+  'tomorrow at 01:00' on the next day, or 'on <short date> at 01:00' on a
+  later day. The time is the short time format, or the long one, with
+  seconds, when AShowSeconds is True. }
+function FormatEndTime(ANow, AEnd: TDateTime; AShowSeconds: Boolean;
+  const AFormat: TFormatSettings): string;
+
+{ The text of the status bar: when AActionName runs, at AEnd, and in how
+  many seconds (ASeconds), e.g.
+    skCountdownIdle: 'Shutdown at 23:45 if started now · in 01:00:00', or
+      'Shutdown right away if started now' when ASeconds is 0
+    skClockIdle: 'Shutdown tomorrow at 14:00 · in 23:30:00'
+    skRunning: 'Shutdown at 23:45 · 00:42:17 left'
+  AShowSeconds and AFormat are passed on to FormatEndTime. }
+function CountdownStatus(AKind: TStatusKind; const AActionName: string;
+  ANow, AEnd: TDateTime; ASeconds: Integer; AShowSeconds: Boolean;
+  const AFormat: TFormatSettings): string;
+
 implementation
 
 uses
-  SysUtils, DateUtils;
+  DateUtils;
+
+const
+  // UTF-8 encoded U+00B7, between the end time and the duration
+  MiddleDot = #$C2#$B7;
 
 resourcestring
   // Hours, minutes, seconds
   rsRemainingFormat = '%.2d h %.2d m %.2d s';
   // Hours
   rsDelayHoursFormat = '%d h';
+  // Time
+  rsEndToday = 'at %s';
+  // Time
+  rsEndTomorrow = 'tomorrow at %s';
+  // Short date, time
+  rsEndLater = 'on %s at %s';
+  // Action, end (see rsEndToday), duration
+  rsStatusCountdownIdle = '%s %s if started now ' + MiddleDot + ' in %s';
+  // Action
+  rsStatusCountdownNow = '%s right away if started now';
+  // Action, end (see rsEndToday), duration
+  rsStatusClockIdle = '%s %s ' + MiddleDot + ' in %s';
+  // Action, end (see rsEndToday), time left
+  rsStatusRunning = '%s %s ' + MiddleDot + ' %s left';
 
 function Clamp(AValue, AMin, AMax: Integer): Integer;
 begin
@@ -191,6 +240,55 @@ var
 begin
   P := SecondsToTimeParts(ATotalSeconds);
   Result := Format(rsRemainingFormat, [P.Hours, P.Minutes, P.Seconds]);
+end;
+
+function FormatDuration(ATotalSeconds: Integer): string;
+var
+  P: TTimeParts;
+begin
+  P := SecondsToTimeParts(ATotalSeconds);
+  Result := Format('%.2d:%.2d:%.2d', [P.Hours, P.Minutes, P.Seconds]);
+end;
+
+function FormatEndTime(ANow, AEnd: TDateTime; AShowSeconds: Boolean;
+  const AFormat: TFormatSettings): string;
+var
+  Time: string;
+  Days: Integer;
+begin
+  if AShowSeconds then
+    Time := FormatDateTime('tt', AEnd, AFormat)
+  else
+    Time := FormatDateTime('t', AEnd, AFormat);
+  Days := Trunc(DateOf(AEnd)) - Trunc(DateOf(ANow));
+  if Days <= 0 then
+    Result := Format(rsEndToday, [Time])
+  else if Days = 1 then
+    Result := Format(rsEndTomorrow, [Time])
+  else
+    Result := Format(rsEndLater, [FormatDateTime('ddddd', AEnd, AFormat), Time]);
+end;
+
+function CountdownStatus(AKind: TStatusKind; const AActionName: string;
+  ANow, AEnd: TDateTime; ASeconds: Integer; AShowSeconds: Boolean;
+  const AFormat: TFormatSettings): string;
+var
+  EndText: string;
+begin
+  if (AKind = skCountdownIdle) and (ASeconds <= 0) then
+    Exit(Format(rsStatusCountdownNow, [AActionName]));
+  EndText := FormatEndTime(ANow, AEnd, AShowSeconds, AFormat);
+  case AKind of
+    skCountdownIdle:
+      Result := Format(rsStatusCountdownIdle,
+        [AActionName, EndText, FormatDuration(ASeconds)]);
+    skClockIdle:
+      Result := Format(rsStatusClockIdle,
+        [AActionName, EndText, FormatDuration(ASeconds)]);
+  else
+    Result := Format(rsStatusRunning,
+      [AActionName, EndText, FormatDuration(ASeconds)]);
+  end;
 end;
 
 end.
