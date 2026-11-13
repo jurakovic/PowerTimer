@@ -413,7 +413,7 @@ end;
 
 procedure TfrmMain.ShowRemaining(ASeconds: Integer);
 begin
-  WriteTimeFields(SecondsToTimeParts(ASeconds));
+  WriteTimeFields(SecondsToFieldParts(ASeconds));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionNames[SelectedAction], FormatRemaining(ASeconds)]));
 end;

@@ -22,6 +22,9 @@ const
   SecondsPerDay = 24 * SecondsPerHour;
   MSecsPerDay = Int64(SecondsPerDay) * MSecsPerSecond;
 
+  // The most the two-digit time fields can show: 99:59:59
+  MaxFieldSeconds = 99 * SecondsPerHour + 59 * SecondsPerMinute + 59;
+
 type
   TTimeParts = record
     Hours: Integer;
@@ -37,6 +40,10 @@ function TimePartsToSeconds(const AParts: TTimeParts): Integer;
   are treated as zero. The hours are not limited to 23: a whole day gives
   24:00:00. }
 function SecondsToTimeParts(ATotalSeconds: Integer): TTimeParts;
+
+{ SecondsToTimeParts for the time fields: at most 99:59:59, the most two
+  digits per field can show, also when more time is left. }
+function SecondsToFieldParts(ATotalSeconds: Integer): TTimeParts;
 
 { The next occurrence of the wall clock time AClock after ANow, as a local
   date and time: today at AClock, or tomorrow at AClock when that is not at
@@ -107,6 +114,11 @@ begin
   Result.Hours := ATotalSeconds div SecondsPerHour;
   Result.Minutes := (ATotalSeconds div SecondsPerMinute) mod 60;
   Result.Seconds := ATotalSeconds mod 60;
+end;
+
+function SecondsToFieldParts(ATotalSeconds: Integer): TTimeParts;
+begin
+  Result := SecondsToTimeParts(Clamp(ATotalSeconds, 0, MaxFieldSeconds));
 end;
 
 function NextOccurrence(ANow: TDateTime; const AClock: TTimeParts): TDateTime;

@@ -17,6 +17,7 @@ type
     procedure SecondsConversion_RoundTrips;
     procedure SecondsToTimeParts_NegativeIsZero;
     procedure SecondsToTimeParts_FullDayIs24Hours;
+    procedure SecondsToFieldParts_StopsAt99Hours;
     procedure MSecsUntilClockTime_LaterToday;
     procedure MSecsUntilClockTime_EarlierMeansTomorrow;
     procedure MSecsUntilClockTime_NowMeansTomorrow;
@@ -66,6 +67,14 @@ end;
 procedure TTimerLogicTests.SecondsToTimeParts_FullDayIs24Hours;
 begin
   CheckParts(MakeTimeParts(24, 0, 0), SecondsToTimeParts(SecondsPerDay));
+end;
+
+procedure TTimerLogicTests.SecondsToFieldParts_StopsAt99Hours;
+begin
+  CheckParts(MakeTimeParts(24, 0, 0), SecondsToFieldParts(SecondsPerDay));
+  CheckParts(MakeTimeParts(99, 59, 59), SecondsToFieldParts(MaxFieldSeconds));
+  CheckParts(MakeTimeParts(99, 59, 59), SecondsToFieldParts(100 * SecondsPerHour));
+  CheckParts(MakeTimeParts(0, 0, 0), SecondsToFieldParts(-10));
 end;
 
 procedure TTimerLogicTests.MSecsUntilClockTime_LaterToday;
