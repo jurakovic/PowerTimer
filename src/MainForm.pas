@@ -117,7 +117,8 @@ procedure TfrmMain.FormCreate(Sender: TObject);
 var
   Settings: TAppSettings;
 begin
-  // The captions in the form file are only what the designer shows
+  // The title and the tray hint in the form file are only what the designer
+  // shows
   Caption := AppTitle;
   trayIcon.Hint := AppTitle;
   FClockMode := btnSetTime.Down;
