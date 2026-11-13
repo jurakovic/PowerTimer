@@ -12,8 +12,11 @@ uses
   Classes, TimerLogic, PowerActions;
 
 type
-  { Countdown waits for the entered duration, ClockTime until the entered
-    wall clock time. }
+  { Countdown waits for the entered duration, counting the ticks, so a
+    change of the clock doesn't change it. ClockTime waits until the clock
+    shows the entered time: it keeps that as a local date and time and
+    compares it with the time on every tick, so it follows a change of the
+    clock, e.g. to or from daylight saving time. }
   TCountdownMode = (cmCountdown, cmClockTime);
 
   TPowerActionEvent = procedure(AAction: TPowerAction) of object;
@@ -26,7 +29,8 @@ type
     FMode: TCountdownMode;
     FEntered: TTimeParts;
     FAction: TPowerAction;
-    FDeadline: QWord;
+    FDeadline: QWord; // Countdown mode, in ticks
+    FTarget: TDateTime; // ClockTime mode, local time
     FOnChange: TNotifyEvent;
     FOnRunAction: TPowerActionEvent;
     procedure DoChange;
@@ -73,7 +77,10 @@ var
   DelayMs: Int64;
 begin
   if AMode = cmClockTime then
-    DelayMs := MSecsUntilClockTime(ANow, AEntered)
+  begin
+    FTarget := NextOccurrence(ANow, AEntered);
+    DelayMs := Round((FTarget - ANow) * MSecsPerDay);
+  end
   else
     DelayMs := Int64(TimePartsToSeconds(AEntered)) * MSecsPerSecond;
 
@@ -111,7 +118,10 @@ function TCountdown.RemainingSeconds(ANow: TDateTime; ATicks: QWord): Integer;
 begin
   if not FRunning then
     Exit(0);
-  Result := TimerLogic.RemainingSeconds(ATicks, FDeadline);
+  if FMode = cmClockTime then
+    Result := SecondsUntil(ANow, FTarget)
+  else
+    Result := TimerLogic.RemainingSeconds(ATicks, FDeadline);
 end;
 
 end.

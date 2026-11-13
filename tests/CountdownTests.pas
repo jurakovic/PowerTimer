@@ -36,6 +36,9 @@ type
     procedure Stop_WhenIdleDoesNothing;
     procedure Tick_WhenIdleDoesNothing;
     procedure Start_KeepsTheValues;
+    procedure Tick_ClockSetBackWaitsLonger;
+    procedure Tick_ClockSetForwardRunsAtOnce;
+    procedure Tick_CountdownIgnoresTheClock;
   end;
 
 implementation
@@ -153,6 +156,45 @@ begin
   AssertEquals('hours', 13, Entered.Hours);
   AssertEquals('minutes', 45, Entered.Minutes);
   AssertEquals('seconds', 30, Entered.Seconds);
+end;
+
+procedure TCountdownTests.Tick_ClockSetBackWaitsLonger;
+var
+  Start: TDateTime;
+begin
+  // 07:00 entered at 23:00 on the night the clocks go back an hour: after
+  // 8 hours the clock shows 06:00, and it runs only at 07:00, 9 hours on.
+  Start := EncodeDateTime(2024, 10, 26, 23, 0, 0, 0);
+  FCountdown.Start(cmClockTime, MakeTimeParts(7, 0, 0), paLock, Start, 1000);
+  AssertEquals('at start', 8 * SecondsPerHour,
+    FCountdown.RemainingSeconds(Start, 1000));
+  FCountdown.Tick(EncodeDateTime(2024, 10, 27, 6, 0, 0, 0),
+    1000 + 8 * SecondsPerHour * MSecsPerSecond);
+  AssertTrue('running at 06:00', FCountdown.Running);
+  AssertEquals('at 06:00', SecondsPerHour, FCountdown.RemainingSeconds(
+    EncodeDateTime(2024, 10, 27, 6, 0, 0, 0), 1000 + 8 * SecondsPerHour * MSecsPerSecond));
+  FCountdown.Tick(EncodeDateTime(2024, 10, 27, 7, 0, 0, 0),
+    1000 + 9 * SecondsPerHour * MSecsPerSecond);
+  AssertFalse('running at 07:00', FCountdown.Running);
+  AssertEquals('log', 'change:1;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Tick_ClockSetForwardRunsAtOnce;
+begin
+  FCountdown.Start(cmClockTime, MakeTimeParts(13, 0, 0), paLock, FNow, 1000);
+  FCountdown.Tick(EncodeDateTime(2024, 3, 1, 13, 0, 1, 0), 2000);
+  AssertFalse('running', FCountdown.Running);
+  AssertEquals('log', 'change:1;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Tick_CountdownIgnoresTheClock;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(1, 0, 0), paLock, FNow, 1000);
+  FCountdown.Tick(IncHour(FNow, 2), 2000);
+  AssertTrue('running', FCountdown.Running);
+  AssertEquals('remaining', SecondsPerHour - 1,
+    FCountdown.RemainingSeconds(IncHour(FNow, 2), 2000));
+  AssertEquals('log', 'change:1;', FLog);
 end;
 
 initialization
