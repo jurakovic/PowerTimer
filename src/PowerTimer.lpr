@@ -11,6 +11,7 @@ uses
   MainForm,
   AboutForm,
   OptionsForm,
+  AccessKeyLabel,
   AppInfo,
   TimerLogic,
   TimeFields,

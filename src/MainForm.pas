@@ -6,8 +6,10 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, Menus, ActnList, LCLType, TimerLogic, PowerActions, AppSettings,
-  Countdown;
+  ExtCtrls, Menus, ActnList, LCLType,
+  // After StdCtrls: the labels hide their access keys until Alt is pressed
+  AccessKeyLabel,
+  TimerLogic, PowerActions, AppSettings, Countdown;
 
 type
 
