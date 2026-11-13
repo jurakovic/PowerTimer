@@ -89,7 +89,7 @@ var
 implementation
 
 uses
-  AppInfo, AboutForm;
+  AppInfo, AboutForm, TimeFields;
 
 {$R *.lfm}
 

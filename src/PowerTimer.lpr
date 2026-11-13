@@ -12,6 +12,7 @@ uses
   AboutForm,
   AppInfo,
   TimerLogic,
+  TimeFields,
   PowerActions,
   AppSettings;
 

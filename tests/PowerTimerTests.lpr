@@ -12,6 +12,7 @@ uses
   {$ENDIF}
   Classes, consoletestrunner,
   TimerLogicTests,
+  TimeFieldsTests,
   PowerActionsTests,
   AppSettingsTests,
   AppInfoTests;
