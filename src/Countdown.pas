@@ -40,7 +40,8 @@ type
       time and ATicks the tick count in milliseconds (GetTickCount64).
       Returns False and starts nothing when there is no time to wait, which
       is 00:00:00 in Countdown mode; the caller then decides whether to run
-      the action itself. }
+      the action itself. ClockTime mode always starts: a clock time always
+      has a next occurrence. }
     function Start(AMode: TCountdownMode; const AEntered: TTimeParts;
       AAction: TPowerAction; ANow: TDateTime; ATicks: QWord): Boolean;
     { Called regularly while running. When the time is up it stops,
@@ -76,23 +77,21 @@ function TCountdown.Start(AMode: TCountdownMode; const AEntered: TTimeParts;
 var
   DelayMs: Int64;
 begin
-  if AMode = cmClockTime then
+  if AMode = cmCountdown then
   begin
-    FTarget := NextOccurrence(ANow, AEntered);
-    DelayMs := Round((FTarget - ANow) * MSecsPerDay);
+    DelayMs := Int64(TimePartsToSeconds(AEntered)) * MSecsPerSecond;
+    if DelayMs <= 0 then
+      Exit(False);
+    FDeadline := ATicks + QWord(DelayMs);
   end
   else
-    DelayMs := Int64(TimePartsToSeconds(AEntered)) * MSecsPerSecond;
-
-  Result := DelayMs > 0;
-  if not Result then
-    Exit;
+    FTarget := NextOccurrence(ANow, AEntered);
 
   FMode := AMode;
   FEntered := AEntered;
   FAction := AAction;
-  FDeadline := ATicks + QWord(DelayMs);
   FRunning := True;
+  Result := True;
   DoChange;
 end;
 
