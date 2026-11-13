@@ -31,6 +31,7 @@ type
     FAction: TPowerAction;
     FDeadline: QWord; // Countdown mode, in ticks
     FTarget: TDateTime; // ClockTime mode, local time
+    FEndTime: TDateTime; // Countdown mode, local time, see EndTime
     FOnChange: TNotifyEvent;
     FOnRunAction: TPowerActionEvent;
     procedure DoChange;
@@ -51,6 +52,13 @@ type
     procedure Stop;
     { Whole seconds left, rounded up; 0 when not running. }
     function RemainingSeconds(ANow: TDateTime; ATicks: QWord): Integer;
+    { When the action runs, as a local time. In ClockTime mode that is the
+      target. In Countdown mode it is the end computed at Start, kept as
+      long as the time and the tick count move on together, so it doesn't
+      flicker when they drift by a millisecond; once ANow plus the time
+      left differs from it by more than 2 seconds, e.g. after the clock was
+      changed, it is that instead, and Tick keeps it from then on. }
+    function EndTime(ANow: TDateTime; ATicks: QWord): TDateTime;
     property Running: Boolean read FRunning;
     property Mode: TCountdownMode read FMode;
     { The time as it was entered, e.g. to show it again after a stop. }
@@ -63,6 +71,10 @@ type
   end;
 
 implementation
+
+const
+  // How far the end of a countdown may drift before EndTime moves it
+  EndTimeToleranceMs = 2 * MSecsPerSecond;
 
 { TCountdown }
 
@@ -83,6 +95,7 @@ begin
     if DelayMs <= 0 then
       Exit(False);
     FDeadline := ATicks + QWord(DelayMs);
+    FEndTime := ANow + DelayMs / MSecsPerDay;
   end
   else
     FTarget := NextOccurrence(ANow, AEntered);
@@ -97,7 +110,10 @@ end;
 
 procedure TCountdown.Tick(ANow: TDateTime; ATicks: QWord);
 begin
-  if not FRunning or (RemainingSeconds(ANow, ATicks) > 0) then
+  if not FRunning then
+    Exit;
+  FEndTime := EndTime(ANow, ATicks);
+  if RemainingSeconds(ANow, ATicks) > 0 then
     Exit;
   FRunning := False;
   DoChange;
@@ -121,6 +137,21 @@ begin
     Result := SecondsUntil(ANow, FTarget)
   else
     Result := TimerLogic.RemainingSeconds(ATicks, FDeadline);
+end;
+
+function TCountdown.EndTime(ANow: TDateTime; ATicks: QWord): TDateTime;
+var
+  LeftMs: QWord;
+begin
+  if FMode = cmClockTime then
+    Exit(FTarget);
+  if ATicks < FDeadline then
+    LeftMs := FDeadline - ATicks
+  else
+    LeftMs := 0;
+  Result := ANow + LeftMs / MSecsPerDay;
+  if Abs(Result - FEndTime) * MSecsPerDay <= EndTimeToleranceMs then
+    Result := FEndTime;
 end;
 
 end.

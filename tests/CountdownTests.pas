@@ -20,6 +20,7 @@ type
     FCountdown: TCountdown;
     FLog: string;
     FNow: TDateTime;
+    procedure CheckDateTime(const AMessage: string; AExpected, AActual: TDateTime);
     procedure CountdownChange(Sender: TObject);
     procedure CountdownRunAction(AAction: TPowerAction);
   protected
@@ -39,6 +40,9 @@ type
     procedure Tick_ClockSetBackWaitsLonger;
     procedure Tick_ClockSetForwardRunsAtOnce;
     procedure Tick_CountdownIgnoresTheClock;
+    procedure EndTime_CountdownIsStartPlusTheDuration;
+    procedure EndTime_CountdownFollowsAClockChange;
+    procedure EndTime_ClockTimeIsTheTarget;
   end;
 
 implementation
@@ -52,6 +56,15 @@ end;
 procedure TCountdownTests.CountdownRunAction(AAction: TPowerAction);
 begin
   FLog := FLog + Format('run:%d;', [Ord(AAction)]);
+end;
+
+procedure TCountdownTests.CheckDateTime(const AMessage: string; AExpected,
+  AActual: TDateTime);
+begin
+  AssertTrue(Format('%s: expected %s, got %s', [AMessage,
+    FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AExpected),
+    FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AActual)]),
+    SameDateTime(AExpected, AActual));
 end;
 
 procedure TCountdownTests.SetUp;
@@ -195,6 +208,40 @@ begin
   AssertEquals('remaining', SecondsPerHour - 1,
     FCountdown.RemainingSeconds(IncHour(FNow, 2), 2000));
   AssertEquals('log', 'change:1;', FLog);
+end;
+
+procedure TCountdownTests.EndTime_CountdownIsStartPlusTheDuration;
+var
+  Later: TDateTime;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(1, 0, 0), paLock, FNow, 1000);
+  CheckDateTime('at start', IncHour(FNow), FCountdown.EndTime(FNow, 1000));
+  // Ten minutes on, the clock 400 ms ahead of the tick count
+  Later := IncMilliSecond(IncMinute(FNow, 10), 400);
+  FCountdown.Tick(Later, 1000 + 10 * SecondsPerMinute * MSecsPerSecond);
+  CheckDateTime('ten minutes on', IncHour(FNow),
+    FCountdown.EndTime(Later, 1000 + 10 * SecondsPerMinute * MSecsPerSecond));
+end;
+
+procedure TCountdownTests.EndTime_CountdownFollowsAClockChange;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(1, 0, 0), paLock, FNow, 1000);
+  // The clock is set an hour ahead, the tick count moves on by a second
+  CheckDateTime('after the change', IncHour(FNow, 2),
+    FCountdown.EndTime(IncSecond(IncHour(FNow), 1), 2000));
+  FCountdown.Tick(IncSecond(IncHour(FNow), 1), 2000);
+  CheckDateTime('kept by Tick', IncHour(FNow, 2),
+    FCountdown.EndTime(IncSecond(IncHour(FNow), 2), 3000));
+end;
+
+procedure TCountdownTests.EndTime_ClockTimeIsTheTarget;
+begin
+  FNow := EncodeDateTime(2024, 3, 1, 22, 0, 0, 0);
+  FCountdown.Start(cmClockTime, MakeTimeParts(1, 0, 0), paShutdown, FNow, 5000);
+  CheckDateTime('at start', EncodeDateTime(2024, 3, 2, 1, 0, 0, 0),
+    FCountdown.EndTime(FNow, 5000));
+  CheckDateTime('an hour on', EncodeDateTime(2024, 3, 2, 1, 0, 0, 0),
+    FCountdown.EndTime(IncHour(FNow), 5000 + SecondsPerHour * MSecsPerSecond));
 end;
 
 initialization
