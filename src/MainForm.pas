@@ -18,26 +18,16 @@ type
     actOptions: TAction;
     alMain: TActionList;
     btnCountdown: TSpeedButton;
-    btnDelayMinus: TButton;
-    btnDelayPlus: TButton;
     btnSetTime: TSpeedButton;
     bvlStatus: TBevel;
     btnStart: TButton;
     cbAction: TComboBox;
-    cbDefaultAction: TComboBox;
-    cbMinimizeToTray: TCheckBox;
-    cbRememberWinPos: TCheckBox;
-    cbWarnZeroTime: TCheckBox;
-    edtDefaultDelay: TEdit;
     edtHour: TEdit;
     edtMinute: TEdit;
     edtSecond: TEdit;
-    gbOptions: TGroupBox;
     lblAbout: TLabel;
     lblColon1: TLabel;
     lblColon2: TLabel;
-    lblDefaultAction: TLabel;
-    lblDefaultDelay: TLabel;
     lblHours: TLabel;
     lblMinutes: TLabel;
     lblOptions: TLabel;
@@ -54,10 +44,7 @@ type
     trayIcon: TTrayIcon;
     procedure actAboutExecute(Sender: TObject);
     procedure actOptionsExecute(Sender: TObject);
-    procedure btnDelayMinusClick(Sender: TObject);
-    procedure btnDelayPlusClick(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
-    procedure cbDefaultActionChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -76,16 +63,17 @@ type
     procedure trayIconClick(Sender: TObject);
   private
     FClockMode: Boolean;
-    FDelayHours: Integer;
     FCountdown: TCountdown;
+    { The settings as loaded, or as last changed in the Options dialog.
+      CurrentSettings adds the current window position. }
+    FSettings: TAppSettings;
     function FieldMax(AEdit: TEdit): Integer;
     function ReadTimeFields: TTimeParts;
     procedure WriteTimeFields(const AParts: TTimeParts);
     procedure ResetTimeFields;
-    procedure SetDelayHours(AHours: Integer);
-    procedure SetOptionsVisible(AVisible: Boolean);
     procedure UpdateModeMark;
-    procedure ApplySettings(const ASettings: TAppSettings);
+    procedure ApplySettings;
+    procedure ShowOptions;
     procedure RestoreWindowPosition(const ASettings: TAppSettings);
     function CurrentSettings: TAppSettings;
     procedure SaveCurrentSettings;
@@ -106,7 +94,7 @@ var
 implementation
 
 uses
-  AppInfo, AboutForm, TimeFields;
+  AppInfo, AboutForm, OptionsForm, TimeFields;
 
 {$R *.lfm}
 
@@ -118,19 +106,13 @@ resourcestring
     + LineEnding + 'Are you sure you want to continue?';
   rsConfirmZeroTime = 'No time entered, the selected action will be performed immediately.'
     + LineEnding + 'Continue?';
+  rsSaveSettingsFailed = 'The settings could not be saved.';
   // Application title, action, remaining time
   rsTrayHintRunning = '%s - %s after %s';
-
-const
-  // Space between the last visible control and the status bar, in 96 DPI
-  // pixels
-  BottomMargin = 6;
 
 { TfrmMain }
 
 procedure TfrmMain.FormCreate(Sender: TObject);
-var
-  Settings: TAppSettings;
 begin
   // The title and the tray hint in the form file are only what the designer
   // shows
@@ -150,11 +132,9 @@ begin
   // Filled from PowerActions so that ItemIndex always equals
   // Ord(TPowerAction).
   FillPowerActionList(cbAction.Items);
-  FillPowerActionList(cbDefaultAction.Items);
-  Settings := LoadSettings;
-  ApplySettings(Settings);
-  RestoreWindowPosition(Settings);
-  SetOptionsVisible(False);
+  FSettings := LoadSettings;
+  ApplySettings;
+  RestoreWindowPosition(FSettings);
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -179,14 +159,35 @@ begin
   SaveCurrentSettings;
 end;
 
-procedure TfrmMain.ApplySettings(const ASettings: TAppSettings);
+procedure TfrmMain.ApplySettings;
 begin
-  cbRememberWinPos.Checked := ASettings.RememberWindowPos;
-  cbWarnZeroTime.Checked := ASettings.WarnZeroTime;
-  cbMinimizeToTray.Checked := ASettings.MinimizeToTray;
-  cbDefaultAction.ItemIndex := Ord(ASettings.DefaultAction);
-  cbAction.ItemIndex := Ord(ASettings.DefaultAction);
-  SetDelayHours(ASettings.DefaultDelayHours);
+  cbAction.ItemIndex := Ord(FSettings.DefaultAction);
+  ResetTimeFields;
+end;
+
+{ The settings apply on OK, as the main window would have changed with
+  them: a new default action is selected and a new default delay resets
+  the time fields. A setting that didn't change changes nothing, so a time
+  the user has typed stays. }
+procedure TfrmMain.ShowOptions;
+var
+  Edited: TAppSettings;
+  DelayChanged: Boolean;
+begin
+  Edited := FSettings;
+  if not EditSettings(Self, Edited) then
+    Exit;
+  if Edited.DefaultAction <> FSettings.DefaultAction then
+    cbAction.ItemIndex := Ord(Edited.DefaultAction);
+  DelayChanged := Edited.DefaultDelayHours <> FSettings.DefaultDelayHours;
+  FSettings := Edited;
+  if DelayChanged then
+    ResetTimeFields;
+  // Saved right away, so the change doesn't depend on the window being
+  // closed normally. The user has just changed something, so a failure is
+  // reported here; elsewhere saving stays silent.
+  if not SaveSettings(CurrentSettings) then
+    MessageDlg(AppTitle, rsSaveSettingsFailed, mtError, [mbOK], 0);
 end;
 
 procedure TfrmMain.RestoreWindowPosition(const ASettings: TAppSettings);
@@ -208,12 +209,7 @@ end;
 
 function TfrmMain.CurrentSettings: TAppSettings;
 begin
-  Result := DefaultSettings;
-  Result.RememberWindowPos := cbRememberWinPos.Checked;
-  Result.WarnZeroTime := cbWarnZeroTime.Checked;
-  Result.MinimizeToTray := cbMinimizeToTray.Checked;
-  Result.DefaultAction := PowerActionFromIndex(cbDefaultAction.ItemIndex);
-  Result.DefaultDelayHours := FDelayHours;
+  Result := FSettings;
   // RestoredLeft/Top are the normal window bounds, also while the window
   // is minimized (where Left/Top would be off-screen).
   Result.HasWindowPos := True;
@@ -226,46 +222,9 @@ begin
   SaveSettings(CurrentSettings);
 end;
 
-procedure TfrmMain.SetDelayHours(AHours: Integer);
-begin
-  FDelayHours := ClampDelayHours(AHours);
-  edtDefaultDelay.Text := FormatTimeField(FDelayHours);
-  ResetTimeFields;
-end;
-
-procedure TfrmMain.btnDelayPlusClick(Sender: TObject);
-begin
-  SetDelayHours(FDelayHours + 1);
-end;
-
-procedure TfrmMain.btnDelayMinusClick(Sender: TObject);
-begin
-  SetDelayHours(FDelayHours - 1);
-end;
-
-procedure TfrmMain.cbDefaultActionChange(Sender: TObject);
-begin
-  cbAction.ItemIndex := cbDefaultAction.ItemIndex;
-end;
-
-procedure TfrmMain.SetOptionsVisible(AVisible: Boolean);
-var
-  LastControl: TControl;
-begin
-  gbOptions.Visible := AVisible;
-  if AVisible then
-    LastControl := gbOptions
-  else
-    LastControl := lblHours; // the unit labels end the main row
-  // Computed from the (already DPI scaled) controls, so it fits on high-DPI
-  // screens too. The status bar is aligned to the bottom and moves along.
-  ClientHeight := LastControl.Top + LastControl.Height
-    + Scale96ToForm(BottomMargin) + pnlStatus.Height;
-end;
-
 procedure TfrmMain.actOptionsExecute(Sender: TObject);
 begin
-  SetOptionsVisible(not gbOptions.Visible);
+  ShowOptions;
 end;
 
 procedure TfrmMain.actAboutExecute(Sender: TObject);
@@ -320,9 +279,9 @@ end;
 procedure TfrmMain.ResetTimeFields;
 begin
   if FClockMode then
-    WriteTimeFields(DefaultClockTime(Now, FDelayHours))
+    WriteTimeFields(DefaultClockTime(Now, FSettings.DefaultDelayHours))
   else
-    WriteTimeFields(DefaultCountdown(FDelayHours));
+    WriteTimeFields(DefaultCountdown(FSettings.DefaultDelayHours));
 end;
 
 function TfrmMain.SelectedAction: TPowerAction;
@@ -450,7 +409,7 @@ begin
     Exit;
 
   // Nothing to wait for (00:00:00 in Countdown mode): run the action now
-  if cbWarnZeroTime.Checked and (MessageDlg(rsConfirm, rsConfirmZeroTime,
+  if FSettings.WarnZeroTime and (MessageDlg(rsConfirm, rsConfirmZeroTime,
     mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
     Exit;
   RunAction(SelectedAction);
@@ -462,7 +421,6 @@ procedure TfrmMain.CountdownChange(Sender: TObject);
 begin
   if FCountdown.Running then
   begin
-    SetOptionsVisible(False);
     SetInputsEnabled(False);
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
@@ -500,7 +458,7 @@ end;
 
 procedure TfrmMain.FormWindowStateChange(Sender: TObject);
 begin
-  if (WindowState = wsMinimized) and cbMinimizeToTray.Checked then
+  if (WindowState = wsMinimized) and FSettings.MinimizeToTray then
     HideToTray;
 end;
 
