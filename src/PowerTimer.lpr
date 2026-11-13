@@ -13,6 +13,7 @@ uses
   AppInfo,
   TimerLogic,
   TimeFields,
+  Countdown,
   PowerActions,
   AppSettings;
 

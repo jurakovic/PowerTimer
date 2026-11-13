@@ -13,6 +13,7 @@ uses
   Classes, consoletestrunner,
   TimerLogicTests,
   TimeFieldsTests,
+  CountdownTests,
   PowerActionsTests,
   AppSettingsTests,
   AppInfoTests;
