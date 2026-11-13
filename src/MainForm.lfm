@@ -15,6 +15,7 @@ object frmMain: TfrmMain
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnWindowStateChange = FormWindowStateChange
   LCLVersion = '4.8.0.0'
   object btnCountdown: TSpeedButton

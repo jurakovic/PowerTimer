@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, Menus, LCLType, TimerLogic, PowerActions, AppSettings;
+  ExtCtrls, Menus, LCLType, TimerLogic, PowerActions, AppSettings, Countdown;
 
 type
 
@@ -47,6 +47,7 @@ type
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure FormWindowStateChange(Sender: TObject);
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
@@ -59,9 +60,7 @@ type
   private
     FClockMode: Boolean;
     FDelayHours: Integer;
-    FRunning: Boolean;
-    FDeadline: QWord;
-    FEnteredTime: TTimeParts;
+    FCountdown: TCountdown;
     function FieldMax(AEdit: TEdit): Integer;
     function ReadTimeFields: TTimeParts;
     procedure WriteTimeFields(const AParts: TTimeParts);
@@ -75,7 +74,7 @@ type
     function SelectedAction: TPowerAction;
     procedure SetInputsEnabled(AEnabled: Boolean);
     procedure StartCountdown;
-    procedure StopCountdown;
+    procedure CountdownChange(Sender: TObject);
     procedure ShowRemaining(ASeconds: Integer);
     procedure RunAction(AAction: TPowerAction);
     procedure SetTrayHint(const AHint: string);
@@ -123,6 +122,9 @@ begin
   trayIcon.Hint := AppTitle;
   FClockMode := btnSetTime.Down;
   trayIcon.Icon.Assign(Application.Icon);
+  FCountdown := TCountdown.Create;
+  FCountdown.OnChange := @CountdownChange;
+  FCountdown.OnRunAction := @RunAction;
   // Without an active control the form would focus the hour field. The
   // empty, zero-size panel holds the focus instead, so nothing looks
   // selected until the user clicks a control or presses Tab; it is no tab
@@ -136,6 +138,11 @@ begin
   ApplySettings(Settings);
   RestoreWindowPosition(Settings);
   SetOptionsVisible(False);
+end;
+
+procedure TfrmMain.FormDestroy(Sender: TObject);
+begin
+  FCountdown.Free;
 end;
 
 procedure TfrmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -244,7 +251,7 @@ end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  if FRunning then
+  if FCountdown.Running then
     CanClose := MessageDlg(rsConfirm, rsConfirmClose,
       mtConfirmation, [mbYes, mbNo], 0) = mrYes;
 end;
@@ -340,8 +347,8 @@ end;
 
 procedure TfrmMain.btnStartClick(Sender: TObject);
 begin
-  if FRunning then
-    StopCountdown
+  if FCountdown.Running then
+    FCountdown.Stop
   else
     StartCountdown;
 end;
@@ -360,45 +367,47 @@ end;
 procedure TfrmMain.StartCountdown;
 var
   Entered: TTimeParts;
-  DelayMs: Int64;
+  Mode: TCountdownMode;
 begin
   Entered := ReadTimeFields;
   WriteTimeFields(Entered);
 
   if FClockMode then
-    DelayMs := MSecsUntilClockTime(Now, Entered)
+    Mode := cmClockTime
   else
-    DelayMs := Int64(TimePartsToSeconds(Entered)) * MSecsPerSecond;
-
-  if DelayMs <= 0 then
-  begin
-    if cbWarnZeroTime.Checked and (MessageDlg(rsConfirm, rsConfirmZeroTime,
-      mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
-      Exit;
-    RunAction(SelectedAction);
+    Mode := cmCountdown;
+  if FCountdown.Start(Mode, Entered, SelectedAction, Now, GetTickCount64) then
     Exit;
-  end;
 
-  SetOptionsVisible(False);
-  FEnteredTime := Entered;
-  FDeadline := GetTickCount64 + QWord(DelayMs);
-  FRunning := True;
-  SetInputsEnabled(False);
-  btnStart.Caption := rsStop;
-  ShowRemaining(RemainingSeconds(GetTickCount64, FDeadline));
-  tmrCountdown.Enabled := True;
+  // Nothing to wait for (00:00:00 in Countdown mode): run the action now
+  if cbWarnZeroTime.Checked and (MessageDlg(rsConfirm, rsConfirmZeroTime,
+    mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
+    Exit;
+  RunAction(SelectedAction);
 end;
 
-procedure TfrmMain.StopCountdown;
+{ Called whenever the countdown starts or stops, also when it ends, before
+  the action runs. }
+procedure TfrmMain.CountdownChange(Sender: TObject);
 begin
-  tmrCountdown.Enabled := False;
-  FRunning := False;
-  // Show what was entered again, not the remaining time: in "Set time"
-  // mode the remaining time would otherwise be read as a clock time.
-  WriteTimeFields(FEnteredTime);
-  SetInputsEnabled(True);
-  btnStart.Caption := rsStart;
-  SetTrayHint(AppTitle);
+  if FCountdown.Running then
+  begin
+    SetOptionsVisible(False);
+    SetInputsEnabled(False);
+    btnStart.Caption := rsStop;
+    ShowRemaining(FCountdown.RemainingSeconds(Now, GetTickCount64));
+    tmrCountdown.Enabled := True;
+  end
+  else
+  begin
+    tmrCountdown.Enabled := False;
+    // Show what was entered again, not the remaining time: in "Set time"
+    // mode the remaining time would otherwise be read as a clock time.
+    WriteTimeFields(FCountdown.Entered);
+    SetInputsEnabled(True);
+    btnStart.Caption := rsStart;
+    SetTrayHint(AppTitle);
+  end;
 end;
 
 procedure TfrmMain.ShowRemaining(ASeconds: Integer);
@@ -456,17 +465,14 @@ end;
 
 procedure TfrmMain.tmrCountdownTimer(Sender: TObject);
 var
-  Remaining: Integer;
+  NowTime: TDateTime;
+  Ticks: QWord;
 begin
-  if not FRunning then
-    Exit;
-  Remaining := RemainingSeconds(GetTickCount64, FDeadline);
-  ShowRemaining(Remaining);
-  if Remaining = 0 then
-  begin
-    StopCountdown;
-    RunAction(SelectedAction);
-  end;
+  NowTime := Now;
+  Ticks := GetTickCount64;
+  FCountdown.Tick(NowTime, Ticks);
+  if FCountdown.Running then
+    ShowRemaining(FCountdown.RemainingSeconds(NowTime, Ticks));
 end;
 
 procedure TfrmMain.RunAction(AAction: TPowerAction);
