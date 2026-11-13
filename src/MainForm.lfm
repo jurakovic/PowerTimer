@@ -2,12 +2,12 @@ object frmMain: TfrmMain
   Left = 300
   Height = 112
   Top = 200
-  Width = 586
+  Width = 546
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'Power Timer'
   ClientHeight = 112
-  ClientWidth = 586
+  ClientWidth = 546
   DesignTimePPI = 96
   Font.Height = -12
   Font.Name = 'Segoe UI'
@@ -192,7 +192,7 @@ object frmMain: TfrmMain
     ParentFont = False
   end
   object cbAction: TComboBox
-    Left = 410
+    Left = 370
     Height = 24
     Top = 8
     Width = 168
@@ -205,7 +205,7 @@ object frmMain: TfrmMain
     TabOrder = 3
   end
   object btnStart: TButton
-    Left = 410
+    Left = 370
     Height = 30
     Top = 38
     Width = 168
@@ -222,23 +222,23 @@ object frmMain: TfrmMain
     Left = 0
     Height = 28
     Top = 84
-    Width = 586
+    Width = 546
     Align = alBottom
     BevelOuter = bvNone
     ClientHeight = 28
-    ClientWidth = 586
+    ClientWidth = 546
     TabOrder = 6
     object bvlStatus: TBevel
       Left = 0
       Height = 2
       Top = 0
-      Width = 586
+      Width = 546
       Align = alTop
       Shape = bsTopLine
     end
     object lblAbout: TLabel
       Cursor = crHandPoint
-      Left = 544
+      Left = 504
       Height = 26
       Top = 2
       Width = 34
@@ -254,7 +254,7 @@ object frmMain: TfrmMain
     end
     object lblOptions: TLabel
       Cursor = crHandPoint
-      Left = 488
+      Left = 448
       Height = 26
       Top = 2
       Width = 44
@@ -272,7 +272,7 @@ object frmMain: TfrmMain
       Left = 8
       Height = 26
       Top = 2
-      Width = 468
+      Width = 428
       Align = alClient
       AutoSize = False
       BorderSpacing.Left = 8
