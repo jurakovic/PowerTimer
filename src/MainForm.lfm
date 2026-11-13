@@ -11,11 +11,13 @@ object frmMain: TfrmMain
   DesignTimePPI = 96
   Font.Height = -12
   Font.Name = 'Segoe UI'
+  KeyPreview = True
   Position = poScreenCenter
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   OnWindowStateChange = FormWindowStateChange
   LCLVersion = '4.8.0.0'
   object btnCountdown: TSpeedButton
@@ -122,6 +124,7 @@ object frmMain: TfrmMain
     Top = 38
     Width = 119
     Caption = 'START'
+    Default = True
     Font.Height = -13
     Font.Name = 'Segoe UI'
     Font.Style = [fsBold]

@@ -48,6 +48,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormWindowStateChange(Sender: TObject);
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
@@ -144,6 +145,18 @@ end;
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   FCountdown.Free;
+end;
+
+{ Esc stops a running countdown. It can't be the Cancel key of the Start
+  button, which would also start a countdown on Esc while idle. }
+procedure TfrmMain.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_ESCAPE) and FCountdown.Running then
+  begin
+    FCountdown.Stop;
+    Key := 0;
+  end;
 end;
 
 procedure TfrmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -396,6 +409,8 @@ begin
     SetOptionsVisible(False);
     SetInputsEnabled(False);
     btnStart.Caption := rsStop;
+    // Enter starts a countdown but doesn't stop it by accident
+    btnStart.Default := False;
     ShowRemaining(FCountdown.RemainingSeconds(Now, GetTickCount64));
     tmrCountdown.Enabled := True;
   end
@@ -407,6 +422,7 @@ begin
     WriteTimeFields(FCountdown.Entered);
     SetInputsEnabled(True);
     btnStart.Caption := rsStart;
+    btnStart.Default := True;
     SetTrayHint(AppTitle);
   end;
 end;
