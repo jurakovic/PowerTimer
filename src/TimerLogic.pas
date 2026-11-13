@@ -65,6 +65,9 @@ function RemainingSeconds(ANowTicks, ADeadlineTicks: QWord): Integer;
 
 function ClampDelayHours(AValue: Integer): Integer;
 
+{ The default delay with its unit, e.g. '1 h'. }
+function FormatDelayHours(AHours: Integer): string;
+
 { Initial countdown for the configured delay. The hour field only goes up
   to 23, so a 24 hour delay is shown as 23:59:59. }
 function DefaultCountdown(ADelayHours: Integer): TTimeParts;
@@ -83,6 +86,8 @@ uses
 resourcestring
   // Hours, minutes, seconds
   rsRemainingFormat = '%.2d h %.2d m %.2d s';
+  // Hours
+  rsDelayHoursFormat = '%d h';
 
 function Clamp(AValue, AMin, AMax: Integer): Integer;
 begin
@@ -156,6 +161,11 @@ end;
 function ClampDelayHours(AValue: Integer): Integer;
 begin
   Result := Clamp(AValue, MinDelayHours, MaxDelayHours);
+end;
+
+function FormatDelayHours(AHours: Integer): string;
+begin
+  Result := Format(rsDelayHoursFormat, [AHours]);
 end;
 
 function DefaultCountdown(ADelayHours: Integer): TTimeParts;

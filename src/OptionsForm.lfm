@@ -53,33 +53,34 @@ object frmOptions: TfrmOptions
     Width = 98
     Caption = 'Default time delay'
   end
-  object btnDelayPlus: TButton
-    Left = 232
+  object btnDelayMinus: TButton
+    Left = 284
     Height = 24
     Top = 70
-    Width = 39
-    Caption = '+'
-    OnClick = btnDelayPlusClick
+    Width = 28
+    Caption = #8722
+    OnClick = btnDelayMinusClick
     TabOrder = 1
   end
   object edtDefaultDelay: TEdit
-    Left = 277
-    Height = 22
-    Top = 71
-    Width = 27
+    Left = 312
+    Height = 24
+    Top = 70
+    Width = 44
     Alignment = taCenter
+    AutoSize = False
     ReadOnly = True
     TabStop = False
     TabOrder = 3
-    Text = '01'
+    Text = '1 h'
   end
-  object btnDelayMinus: TButton
-    Left = 310
+  object btnDelayPlus: TButton
+    Left = 356
     Height = 24
     Top = 70
-    Width = 41
-    Caption = '-'
-    OnClick = btnDelayMinusClick
+    Width = 28
+    Caption = '+'
+    OnClick = btnDelayPlusClick
     TabOrder = 2
   end
   object lblBehaviour: TLabel

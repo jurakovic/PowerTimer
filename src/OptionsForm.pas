@@ -47,7 +47,7 @@ function EditSettings(AOwner: TComponent; var ASettings: TAppSettings): Boolean;
 implementation
 
 uses
-  TimerLogic, TimeFields, PowerActions;
+  TimerLogic, PowerActions;
 
 {$R *.lfm}
 
@@ -96,7 +96,7 @@ end;
 procedure TfrmOptions.SetDelayHours(AHours: Integer);
 begin
   FDelayHours := ClampDelayHours(AHours);
-  edtDefaultDelay.Text := FormatTimeField(FDelayHours);
+  edtDefaultDelay.Text := FormatDelayHours(FDelayHours);
 end;
 
 procedure TfrmOptions.btnDelayPlusClick(Sender: TObject);
