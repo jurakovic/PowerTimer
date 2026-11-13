@@ -8,10 +8,10 @@
 A small Windows tool that shuts down, restarts, logs off, locks, suspends (sleep) or hibernates the computer after a countdown or at a set time.
 
 - **Countdown** – run the action after the entered hours, minutes and seconds
-- **Set time** – run the action when the clock shows the entered time (tomorrow if that time has already passed today), also if the clock is changed meanwhile, e.g. to or from daylight saving time
+- **At time** – run the action when the clock shows the entered time (tomorrow if that time has already passed today), also if the clock is changed meanwhile, e.g. to or from daylight saving time
 - Up/Down arrow keys change the focused field; Enter starts the countdown and Esc stops it
 - Optional minimize to the system tray, with the remaining time in the tray tooltip
-- Options for the default action, the default time delay, remembering the window position and a warning for a zero countdown; they are stored in `HKEY_CURRENT_USER\Software\Power Timer`
+- Options for the default action, the default time delay, remembering the window position and a warning for a zero countdown, shown with *Options* in the status bar, next to *About* (Alt+O, Alt+A); they are stored in `HKEY_CURRENT_USER\Software\Power Timer`
 
 ### Download
 
