@@ -51,6 +51,21 @@ uses
   {$ENDIF}
   SysUtils;
 
+resourcestring
+  {$IFDEF WINDOWS}
+  // shutdown.exe
+  rsShutdownExeNotFound = 'Could not find %s: the Windows system directory is unknown.';
+  // Path of shutdown.exe, error message
+  rsCouldNotStart = 'Could not start %s: %s';
+  // Arguments, exit code
+  rsShutdownExeFailed = 'shutdown.exe %s failed with exit code %d.';
+  rsCouldNotLock = 'Could not lock the workstation';
+  rsCouldNotSleep = 'Could not put the computer to sleep';
+  {$ELSE}
+  // Action name
+  rsOnlyOnWindows = '%s is only supported on Windows.';
+  {$ENDIF}
+
 function PowerActionFromIndex(AIndex: Integer): TPowerAction;
 begin
   if (AIndex >= Ord(Low(TPowerAction))) and (AIndex <= Ord(High(TPowerAction))) then
@@ -114,8 +129,7 @@ begin
   ExePath := ShutdownExePath;
   if ExePath = '' then
   begin
-    AError := 'Could not find ' + ShutdownExeName
-      + ': the Windows system directory is unknown.';
+    AError := Format(rsShutdownExeNotFound, [ShutdownExeName]);
     Exit;
   end;
   Proc := TProcess.Create(nil);
@@ -131,14 +145,13 @@ begin
     except
       on E: Exception do
       begin
-        AError := 'Could not start ' + ExePath + ': ' + E.Message;
+        AError := Format(rsCouldNotStart, [ExePath, E.Message]);
         Exit;
       end;
     end;
     Result := Proc.ExitStatus = 0;
     if not Result then
-      AError := Format('shutdown.exe %s failed with exit code %d.',
-        [AArguments, Proc.ExitStatus]);
+      AError := Format(rsShutdownExeFailed, [AArguments, Proc.ExitStatus]);
   finally
     Proc.Free;
   end;
@@ -183,14 +196,14 @@ begin
       begin
         Result := LockWorkStation;
         if not Result then
-          AError := LastErrorText('Could not lock the workstation');
+          AError := LastErrorText(rsCouldNotLock);
       end;
     paSleep:
       begin
         EnableShutdownPrivilege;
         Result := SetSuspendState(False, True, True);
         if not Result then
-          AError := LastErrorText('Could not put the computer to sleep');
+          AError := LastErrorText(rsCouldNotSleep);
       end;
   else
     Result := False;
@@ -207,7 +220,7 @@ end;
 function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
 begin
   Result := False;
-  AError := PowerActionNames[AAction] + ' is only supported on Windows.';
+  AError := Format(rsOnlyOnWindows, [PowerActionNames[AAction]]);
 end;
 
 {$ENDIF}

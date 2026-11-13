@@ -93,6 +93,17 @@ uses
 
 {$R *.lfm}
 
+resourcestring
+  rsStart = 'START';
+  rsStop = 'STOP';
+  rsConfirm = 'Confirm';
+  rsConfirmClose = 'If you close this application the selected action will not be performed.'
+    + LineEnding + 'Are you sure you want to continue?';
+  rsConfirmZeroTime = 'No time entered, the selected action will be performed immediately.'
+    + LineEnding + 'Continue?';
+  // Application title, action, remaining time
+  rsTrayHintRunning = '%s - %s after %s';
+
 const
   // UTF-8 encoded U+25BC / U+25B2 for the options toggle button
   ArrowDown = #$E2#$96#$BC;
@@ -231,9 +242,7 @@ end;
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   if FRunning then
-    CanClose := MessageDlg('Confirm',
-      'If you close this application the selected action will not be performed.'
-      + LineEnding + 'Are you sure you want to continue?',
+    CanClose := MessageDlg(rsConfirm, rsConfirmClose,
       mtConfirmation, [mbYes, mbNo], 0) = mrYes;
 end;
 
@@ -358,9 +367,8 @@ begin
 
   if DelayMs <= 0 then
   begin
-    if cbWarnZeroTime.Checked and (MessageDlg('Confirm',
-      'No time entered, the selected action will be performed immediately.'
-      + LineEnding + 'Continue?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
+    if cbWarnZeroTime.Checked and (MessageDlg(rsConfirm, rsConfirmZeroTime,
+      mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
       Exit;
     RunAction(SelectedAction);
     Exit;
@@ -371,7 +379,7 @@ begin
   FDeadline := GetTickCount64 + QWord(DelayMs);
   FRunning := True;
   SetInputsEnabled(False);
-  btnStart.Caption := 'STOP';
+  btnStart.Caption := rsStop;
   ShowRemaining(RemainingSeconds(GetTickCount64, FDeadline));
   tmrCountdown.Enabled := True;
 end;
@@ -384,15 +392,15 @@ begin
   // mode the remaining time would otherwise be read as a clock time.
   WriteTimeFields(FEnteredTime);
   SetInputsEnabled(True);
-  btnStart.Caption := 'START';
+  btnStart.Caption := rsStart;
   SetTrayHint(AppTitle);
 end;
 
 procedure TfrmMain.ShowRemaining(ASeconds: Integer);
 begin
   WriteTimeFields(SecondsToTimeParts(ASeconds));
-  SetTrayHint(AppTitle + ' - ' + PowerActionNames[SelectedAction] + ' after '
-    + FormatRemaining(ASeconds));
+  SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
+    PowerActionNames[SelectedAction], FormatRemaining(ASeconds)]));
 end;
 
 procedure TfrmMain.SetTrayHint(const AHint: string);

@@ -30,9 +30,13 @@ procedure ShowAbout(AOwner: TComponent);
 implementation
 
 uses
-  LCLIntf, AppInfo;
+  SysUtils, LCLIntf, AppInfo;
 
 {$R *.lfm}
+
+resourcestring
+  // Application title
+  rsAboutCaption = 'About %s';
 
 procedure ShowAbout(AOwner: TComponent);
 var
@@ -50,7 +54,7 @@ end;
 
 procedure TfrmAbout.FormCreate(Sender: TObject);
 begin
-  Caption := 'About ' + AppTitle;
+  Caption := Format(rsAboutCaption, [AppTitle]);
   lblTitle.Caption := AppTitleWithVersion(AppVersion);
   lblLink.Caption := AppUrl;
   imgIcon.Picture.Icon.Assign(Application.Icon);

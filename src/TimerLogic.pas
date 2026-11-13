@@ -63,6 +63,10 @@ implementation
 uses
   SysUtils, DateUtils;
 
+resourcestring
+  // Hours, minutes, seconds
+  rsRemainingFormat = '%.2d h %.2d m %.2d s';
+
 function Clamp(AValue, AMin, AMax: Integer): Integer;
 begin
   if AValue < AMin then
@@ -142,7 +146,7 @@ var
   P: TTimeParts;
 begin
   P := SecondsToTimeParts(ATotalSeconds);
-  Result := Format('%.2d h %.2d m %.2d s', [P.Hours, P.Minutes, P.Seconds]);
+  Result := Format(rsRemainingFormat, [P.Hours, P.Minutes, P.Seconds]);
 end;
 
 end.
