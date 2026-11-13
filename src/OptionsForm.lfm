@@ -1,0 +1,148 @@
+object frmOptions: TfrmOptions
+  Left = 400
+  Height = 267
+  Top = 300
+  Width = 400
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ClientHeight = 267
+  ClientWidth = 400
+  DesignTimePPI = 96
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Position = poOwnerFormCenter
+  OnCreate = FormCreate
+  LCLVersion = '4.8.0.0'
+  object lblOnStartup: TLabel
+    Left = 16
+    Height = 15
+    Top = 12
+    Width = 63
+    Caption = 'On startup'
+    Font.Height = -12
+    Font.Name = 'Segoe UI'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lblDefaultAction: TLabel
+    AnchorSideTop.Control = cbDefaultAction
+    AnchorSideTop.Side = asrCenter
+    Left = 16
+    Height = 15
+    Top = 42
+    Width = 75
+    Caption = 'Default action'
+    FocusControl = cbDefaultAction
+  end
+  object cbDefaultAction: TComboBox
+    Left = 232
+    Height = 23
+    Top = 38
+    Width = 152
+    ItemHeight = 15
+    Style = csDropDownList
+    TabOrder = 0
+  end
+  object lblDefaultDelay: TLabel
+    AnchorSideTop.Control = edtDefaultDelay
+    AnchorSideTop.Side = asrCenter
+    Left = 16
+    Height = 15
+    Top = 74
+    Width = 98
+    Caption = 'Default time delay'
+  end
+  object btnDelayPlus: TButton
+    Left = 232
+    Height = 24
+    Top = 70
+    Width = 39
+    Caption = '+'
+    OnClick = btnDelayPlusClick
+    TabOrder = 1
+  end
+  object edtDefaultDelay: TEdit
+    Left = 277
+    Height = 22
+    Top = 71
+    Width = 27
+    Alignment = taCenter
+    ReadOnly = True
+    TabStop = False
+    TabOrder = 3
+    Text = '01'
+  end
+  object btnDelayMinus: TButton
+    Left = 310
+    Height = 24
+    Top = 70
+    Width = 41
+    Caption = '-'
+    OnClick = btnDelayMinusClick
+    TabOrder = 2
+  end
+  object lblBehaviour: TLabel
+    Left = 16
+    Height = 15
+    Top = 110
+    Width = 63
+    Caption = 'Behaviour'
+    Font.Height = -12
+    Font.Name = 'Segoe UI'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object cbMinimizeToTray: TCheckBox
+    Left = 16
+    Height = 19
+    Top = 134
+    Width = 153
+    Caption = 'Minimize to system tray'
+    TabOrder = 4
+  end
+  object cbRememberWinPos: TCheckBox
+    Left = 16
+    Height = 19
+    Top = 158
+    Width = 178
+    Caption = 'Remember window position'
+    TabOrder = 5
+  end
+  object cbWarnZeroTime: TCheckBox
+    Left = 16
+    Height = 19
+    Top = 182
+    Width = 219
+    Caption = 'Warn me if countdown time is zero'
+    TabOrder = 6
+  end
+  object bvlButtons: TBevel
+    Left = 0
+    Height = 2
+    Top = 216
+    Width = 400
+    Anchors = [akTop, akLeft, akRight]
+    Shape = bsTopLine
+  end
+  object btnOK: TButton
+    Left = 228
+    Height = 25
+    Top = 230
+    Width = 75
+    Caption = 'OK'
+    Default = True
+    ModalResult = 1
+    TabOrder = 7
+  end
+  object btnCancel: TButton
+    Left = 309
+    Height = 25
+    Top = 230
+    Width = 75
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 8
+  end
+end

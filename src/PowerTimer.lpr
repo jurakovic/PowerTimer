@@ -10,6 +10,7 @@ uses
   Forms,
   MainForm,
   AboutForm,
+  OptionsForm,
   AppInfo,
   TimerLogic,
   TimeFields,
