@@ -34,7 +34,8 @@ function MakeTimeParts(AHours, AMinutes, ASeconds: Integer): TTimeParts;
 function TimePartsToSeconds(const AParts: TTimeParts): Integer;
 
 { Splits a duration into hours, minutes and seconds. Negative durations
-  are treated as zero. }
+  are treated as zero. The hours are not limited to 23: a whole day gives
+  24:00:00. }
 function SecondsToTimeParts(ATotalSeconds: Integer): TTimeParts;
 
 { Milliseconds from ANow until the next occurrence of the wall clock time

@@ -133,7 +133,6 @@ object frmMain: TfrmMain
     Height = 57
     Top = 7
     Width = 16
-    Caption = #9660
     Font.Height = -8
     Font.Name = 'Tahoma'
     OnClick = btnOptionsClick

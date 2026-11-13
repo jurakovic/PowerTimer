@@ -118,6 +118,9 @@ procedure TfrmMain.FormCreate(Sender: TObject);
 var
   Settings: TAppSettings;
 begin
+  // The captions in the form file are only what the designer shows
+  Caption := AppTitle;
+  trayIcon.Hint := AppTitle;
   FClockMode := btnSetTime.Down;
   trayIcon.Icon.Assign(Application.Icon);
   // Without an active control the form would focus the hour field. The
@@ -250,8 +253,10 @@ function TfrmMain.FieldMax(AEdit: TEdit): Integer;
 begin
   if AEdit = edtHour then
     Result := MaxHour
+  else if AEdit = edtMinute then
+    Result := MaxMinute
   else
-    Result := MaxMinute;
+    Result := MaxSecond;
 end;
 
 function TfrmMain.ReadTimeFields: TTimeParts;
