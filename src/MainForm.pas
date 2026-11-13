@@ -41,6 +41,7 @@ type
     shpModeFrame: TShape;
     shpModeMark: TShape;
     tmrCountdown: TTimer;
+    tmrStatus: TTimer;
     trayIcon: TTrayIcon;
     procedure actAboutExecute(Sender: TObject);
     procedure actOptionsExecute(Sender: TObject);
@@ -60,6 +61,7 @@ type
     procedure TimeFieldKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure TimeFieldKeyPress(Sender: TObject; var Key: Char);
     procedure tmrCountdownTimer(Sender: TObject);
+    procedure tmrStatusTimer(Sender: TObject);
     procedure trayIconClick(Sender: TObject);
   private
     FClockMode: Boolean;
@@ -81,7 +83,9 @@ type
     procedure SetInputsEnabled(AEnabled: Boolean);
     procedure StartCountdown;
     procedure CountdownChange(Sender: TObject);
-    procedure ShowRemaining(ASeconds: Integer);
+    procedure ShowRemaining(ANow: TDateTime; ATicks: QWord);
+    procedure UpdateIdleStatus;
+    procedure SetStatusText(const AText: string);
     procedure RunAction(AAction: TPowerAction);
     procedure SetTrayHint(const AHint: string);
     procedure HideToTray;
@@ -135,6 +139,7 @@ begin
   FSettings := LoadSettings;
   ApplySettings;
   RestoreWindowPosition(FSettings);
+  UpdateIdleStatus;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -325,6 +330,7 @@ begin
   FClockMode := btnSetTime.Down;
   UpdateModeMark;
   ResetTimeFields;
+  UpdateIdleStatus;
 end;
 
 procedure TfrmMain.TimeFieldExit(Sender: TObject);
@@ -421,31 +427,99 @@ procedure TfrmMain.CountdownChange(Sender: TObject);
 begin
   if FCountdown.Running then
   begin
+    // While running, the countdown timer updates the status text
+    tmrStatus.Enabled := False;
     SetInputsEnabled(False);
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
-    ShowRemaining(FCountdown.RemainingSeconds(Now, GetTickCount64));
+    ShowRemaining(Now, GetTickCount64);
     tmrCountdown.Enabled := True;
   end
   else
   begin
     tmrCountdown.Enabled := False;
-    // Show what was entered again, not the remaining time: in "At time"
-    // mode the remaining time would otherwise be read as a clock time.
+    // Show what was entered again, not the time left in Countdown mode
     WriteTimeFields(FCountdown.Entered);
     SetInputsEnabled(True);
     btnStart.Caption := rsStart;
     btnStart.Default := True;
     SetTrayHint(AppTitle);
+    UpdateIdleStatus;
+    tmrStatus.Enabled := True;
   end;
 end;
 
-procedure TfrmMain.ShowRemaining(ASeconds: Integer);
+{ Countdown mode counts down in the time fields. At time mode keeps showing
+  the clock time it ends at, so a clock time is never replaced by a
+  duration; the time left is in the status text. }
+procedure TfrmMain.ShowRemaining(ANow: TDateTime; ATicks: QWord);
+var
+  Seconds: Integer;
+  EndTime: TDateTime;
+  ClockMode: Boolean;
+  H, M, S, MS: Word;
 begin
-  WriteTimeFields(SecondsToFieldParts(ASeconds));
+  Seconds := FCountdown.RemainingSeconds(ANow, ATicks);
+  EndTime := FCountdown.EndTime(ANow, ATicks);
+  ClockMode := FCountdown.Mode = cmClockTime;
+  if ClockMode then
+  begin
+    DecodeTime(EndTime, H, M, S, MS);
+    WriteTimeFields(MakeTimeParts(H, M, S));
+  end
+  else
+    WriteTimeFields(SecondsToFieldParts(Seconds));
+  SetStatusText(CountdownStatus(skRunning, PowerActionNames[FCountdown.Action],
+    ANow, EndTime, Seconds, ClockMode and (FCountdown.Entered.Seconds <> 0),
+    DefaultFormatSettings));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
-    PowerActionNames[SelectedAction], FormatRemaining(ASeconds)]));
+    PowerActionNames[SelectedAction], FormatRemaining(Seconds)]));
+end;
+
+{ Before Start: when the action would run if started now in Countdown mode,
+  or when it runs in At time mode, which says "tomorrow" once the entered
+  time has passed today, so a typo such as 14:00 for 15:00 shows. The time
+  is in the user's short time format; At time mode adds the seconds when
+  they aren't zero. }
+procedure TfrmMain.UpdateIdleStatus;
+var
+  Entered: TTimeParts;
+  NowTime, Target: TDateTime;
+  Seconds: Integer;
+begin
+  Entered := ReadTimeFields;
+  NowTime := Now;
+  if FClockMode then
+  begin
+    Target := NextOccurrence(NowTime, Entered);
+    SetStatusText(CountdownStatus(skClockIdle,
+      PowerActionNames[SelectedAction], NowTime, Target,
+      SecondsUntil(NowTime, Target), Entered.Seconds <> 0,
+      DefaultFormatSettings));
+  end
+  else
+  begin
+    Seconds := TimePartsToSeconds(Entered);
+    SetStatusText(CountdownStatus(skCountdownIdle,
+      PowerActionNames[SelectedAction], NowTime,
+      NowTime + Seconds / SecondsPerDay, Seconds, False,
+      DefaultFormatSettings));
+  end;
+end;
+
+procedure TfrmMain.SetStatusText(const AText: string);
+begin
+  // Only on change: the timers fire several times per second
+  if lblStatus.Caption <> AText then
+    lblStatus.Caption := AText;
+end;
+
+{ While idle, the status text follows typing, the mode, the action and the
+  clock. }
+procedure TfrmMain.tmrStatusTimer(Sender: TObject);
+begin
+  UpdateIdleStatus;
 end;
 
 procedure TfrmMain.SetTrayHint(const AHint: string);
@@ -503,7 +577,7 @@ begin
   Ticks := GetTickCount64;
   FCountdown.Tick(NowTime, Ticks);
   if FCountdown.Running then
-    ShowRemaining(FCountdown.RemainingSeconds(NowTime, Ticks));
+    ShowRemaining(NowTime, Ticks);
 end;
 
 procedure TfrmMain.RunAction(AAction: TPowerAction);

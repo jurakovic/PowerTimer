@@ -294,6 +294,12 @@ object frmMain: TfrmMain
     Left = 8
     Top = 80
   end
+  object tmrStatus: TTimer
+    Interval = 250
+    OnTimer = tmrStatusTimer
+    Left = 136
+    Top = 80
+  end
   object trayIcon: TTrayIcon
     Hint = 'Power Timer'
     PopUpMenu = pmTray
