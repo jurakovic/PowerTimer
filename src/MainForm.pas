@@ -6,19 +6,22 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  ExtCtrls, Menus, LCLType, TimerLogic, PowerActions, AppSettings, Countdown;
+  ExtCtrls, Menus, ActnList, LCLType, TimerLogic, PowerActions, AppSettings,
+  Countdown;
 
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
-    btnAbout: TButton;
+    actAbout: TAction;
+    actOptions: TAction;
+    alMain: TActionList;
     btnCountdown: TSpeedButton;
     btnDelayMinus: TButton;
     btnDelayPlus: TButton;
-    btnOptions: TButton;
     btnSetTime: TSpeedButton;
+    bvlStatus: TBevel;
     btnStart: TButton;
     cbAction: TComboBox;
     cbDefaultAction: TComboBox;
@@ -30,18 +33,29 @@ type
     edtMinute: TEdit;
     edtSecond: TEdit;
     gbOptions: TGroupBox;
+    lblAbout: TLabel;
+    lblColon1: TLabel;
+    lblColon2: TLabel;
     lblDefaultAction: TLabel;
     lblDefaultDelay: TLabel;
+    lblHours: TLabel;
+    lblMinutes: TLabel;
+    lblOptions: TLabel;
+    lblSeconds: TLabel;
+    lblStatus: TLabel;
     miClose: TMenuItem;
     miShow: TMenuItem;
     pmTray: TPopupMenu;
     pnlFocusHolder: TPanel;
+    pnlStatus: TPanel;
+    shpModeFrame: TShape;
+    shpModeMark: TShape;
     tmrCountdown: TTimer;
     trayIcon: TTrayIcon;
-    procedure btnAboutClick(Sender: TObject);
+    procedure actAboutExecute(Sender: TObject);
+    procedure actOptionsExecute(Sender: TObject);
     procedure btnDelayMinusClick(Sender: TObject);
     procedure btnDelayPlusClick(Sender: TObject);
-    procedure btnOptionsClick(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
     procedure cbDefaultActionChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -50,6 +64,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormWindowStateChange(Sender: TObject);
+    procedure lblAboutClick(Sender: TObject);
+    procedure lblOptionsClick(Sender: TObject);
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
     procedure ModeButtonClick(Sender: TObject);
@@ -68,6 +84,7 @@ type
     procedure ResetTimeFields;
     procedure SetDelayHours(AHours: Integer);
     procedure SetOptionsVisible(AVisible: Boolean);
+    procedure UpdateModeMark;
     procedure ApplySettings(const ASettings: TAppSettings);
     procedure RestoreWindowPosition(const ASettings: TAppSettings);
     function CurrentSettings: TAppSettings;
@@ -94,8 +111,8 @@ uses
 {$R *.lfm}
 
 resourcestring
-  rsStart = 'START';
-  rsStop = 'STOP';
+  rsStart = 'Start';
+  rsStop = 'Stop';
   rsConfirm = 'Confirm';
   rsConfirmClose = 'If you close this application the selected action will not be performed.'
     + LineEnding + 'Are you sure you want to continue?';
@@ -105,11 +122,8 @@ resourcestring
   rsTrayHintRunning = '%s - %s after %s';
 
 const
-  // UTF-8 encoded U+25BC / U+25B2 for the options toggle button
-  ArrowDown = #$E2#$96#$BC;
-  ArrowUp = #$E2#$96#$B2;
-
-  // Space below the last visible control, in 96 DPI pixels
+  // Space between the last visible control and the status bar, in 96 DPI
+  // pixels
   BottomMargin = 6;
 
 { TfrmMain }
@@ -123,6 +137,7 @@ begin
   Caption := AppTitle;
   trayIcon.Hint := AppTitle;
   FClockMode := btnSetTime.Down;
+  UpdateModeMark;
   trayIcon.Icon.Assign(Application.Icon);
   FCountdown := TCountdown.Create;
   FCountdown.OnChange := @CountdownChange;
@@ -239,28 +254,35 @@ var
 begin
   gbOptions.Visible := AVisible;
   if AVisible then
-  begin
-    btnOptions.Caption := ArrowUp;
-    LastControl := gbOptions;
-  end
+    LastControl := gbOptions
   else
-  begin
-    btnOptions.Caption := ArrowDown;
-    LastControl := btnOptions;
-  end;
+    LastControl := lblHours; // the unit labels end the main row
   // Computed from the (already DPI scaled) controls, so it fits on high-DPI
-  // screens too.
-  ClientHeight := LastControl.Top + LastControl.Height + Scale96ToForm(BottomMargin);
+  // screens too. The status bar is aligned to the bottom and moves along.
+  ClientHeight := LastControl.Top + LastControl.Height
+    + Scale96ToForm(BottomMargin) + pnlStatus.Height;
 end;
 
-procedure TfrmMain.btnOptionsClick(Sender: TObject);
+procedure TfrmMain.actOptionsExecute(Sender: TObject);
 begin
   SetOptionsVisible(not gbOptions.Visible);
 end;
 
-procedure TfrmMain.btnAboutClick(Sender: TObject);
+procedure TfrmMain.actAboutExecute(Sender: TObject);
 begin
   ShowAbout(Self);
+end;
+
+{ The links in the status bar are labels: they can't take the keyboard
+  focus, so their actions give them the shortcuts Alt+O and Alt+A. }
+procedure TfrmMain.lblOptionsClick(Sender: TObject);
+begin
+  actOptions.Execute;
+end;
+
+procedure TfrmMain.lblAboutClick(Sender: TObject);
+begin
+  actAbout.Execute;
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -308,11 +330,41 @@ begin
   Result := PowerActionFromIndex(cbAction.ItemIndex);
 end;
 
+{ The selected mode has the accent mark on its left and its text in the
+  accent color; the other one stays a plain flat button, so it still looks
+  clickable. While the mode can't be changed, the mark is grey. }
+procedure TfrmMain.UpdateModeMark;
+var
+  Selected, Other: TSpeedButton;
+  MarkColor: TColor;
+begin
+  if FClockMode then
+  begin
+    Selected := btnSetTime;
+    Other := btnCountdown;
+  end
+  else
+  begin
+    Selected := btnCountdown;
+    Other := btnSetTime;
+  end;
+  shpModeMark.Top := Selected.Top;
+  Selected.Font.Color := clHighlight;
+  Other.Font.Color := clBtnText;
+  if Selected.Enabled then
+    MarkColor := clHighlight
+  else
+    MarkColor := clGrayText;
+  shpModeMark.Brush.Color := MarkColor;
+  shpModeMark.Pen.Color := MarkColor;
+end;
+
 procedure TfrmMain.ModeButtonClick(Sender: TObject);
 begin
   if FClockMode = btnSetTime.Down then
     Exit;
   FClockMode := btnSetTime.Down;
+  UpdateModeMark;
   ResetTimeFields;
 end;
 
@@ -375,7 +427,11 @@ begin
   edtMinute.Enabled := AEnabled;
   edtSecond.Enabled := AEnabled;
   cbAction.Enabled := AEnabled;
-  btnOptions.Enabled := AEnabled;
+  actOptions.Enabled := AEnabled;
+  actAbout.Enabled := AEnabled;
+  lblOptions.Enabled := AEnabled;
+  lblAbout.Enabled := AEnabled;
+  UpdateModeMark;
 end;
 
 procedure TfrmMain.StartCountdown;
@@ -417,7 +473,7 @@ begin
   else
   begin
     tmrCountdown.Enabled := False;
-    // Show what was entered again, not the remaining time: in "Set time"
+    // Show what was entered again, not the remaining time: in "At time"
     // mode the remaining time would otherwise be read as a clock time.
     WriteTimeFields(FCountdown.Entered);
     SetInputsEnabled(True);
