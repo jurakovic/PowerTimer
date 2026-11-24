@@ -15,15 +15,18 @@ type
     remove one. }
   TPowerAction = (paShutdown, paRestart, paLogoff, paLock, paSleep, paHibernate);
 
-  { How an action runs: shutdown.exe with arguments, LockWorkStation or
-    SetSuspendState. }
-  TActionKind = (akShutdownExe, akLockWorkStation, akSuspend);
+  { How an action runs: shutdown.exe with arguments, LockWorkStation,
+    SetSuspendState or ExitWindowsEx, which signs out. }
+  TActionKind = (akShutdownExe, akLockWorkStation, akSuspend, akSignOut);
 
   TPowerActionInfo = record
     Name: string;
     Kind: TActionKind;
     // The arguments for shutdown.exe of akShutdownExe, '' for the others
     ShutdownArgs: string;
+    // The action closes the apps, and can force them to close without
+    // saving
+    CanForce: Boolean;
   end;
 
 const
@@ -32,15 +35,23 @@ const
   { Each action, described once: a new action is one entry, and the table
     doesn't compile without an entry for every action. }
   PowerActionInfo: array[TPowerAction] of TPowerActionInfo = (
-    (Name: 'Shut down'; Kind: akShutdownExe; ShutdownArgs: '/s /t 0'),
-    (Name: 'Restart'; Kind: akShutdownExe; ShutdownArgs: '/r /t 0'),
-    (Name: 'Sign out'; Kind: akShutdownExe; ShutdownArgs: '/l'),
-    (Name: 'Lock'; Kind: akLockWorkStation; ShutdownArgs: ''),
-    (Name: 'Sleep'; Kind: akSuspend; ShutdownArgs: ''),
-    (Name: 'Hibernate'; Kind: akShutdownExe; ShutdownArgs: '/h'));
+    (Name: 'Shut down'; Kind: akShutdownExe; ShutdownArgs: '/s /t 0';
+      CanForce: True),
+    (Name: 'Restart'; Kind: akShutdownExe; ShutdownArgs: '/r /t 0';
+      CanForce: True),
+    // shutdown.exe /l takes no other options, so /f can't force it
+    (Name: 'Sign out'; Kind: akSignOut; ShutdownArgs: ''; CanForce: True),
+    (Name: 'Lock'; Kind: akLockWorkStation; ShutdownArgs: ''; CanForce: False),
+    (Name: 'Sleep'; Kind: akSuspend; ShutdownArgs: ''; CanForce: False),
+    (Name: 'Hibernate'; Kind: akShutdownExe; ShutdownArgs: '/h';
+      CanForce: False));
 
 { The name of AAction, as the lists show it. }
 function PowerActionName(AAction: TPowerAction): string;
+
+{ AAction closes the apps, which forcing closes without saving: Shut down,
+  Restart and Sign out. }
+function PowerActionCanForce(AAction: TPowerAction): Boolean;
 
 { Maps a list index (e.g. ItemIndex of a combo box or a stored setting)
   to an action. Out of range values give DefaultPowerAction. }
@@ -51,8 +62,11 @@ function PowerActionFromIndex(AIndex: Integer): TPowerAction;
   PowerActionFromIndex). Used to fill the action combo boxes. }
 procedure FillPowerActionList(AItems: TStrings);
 
-{ Arguments for shutdown.exe, or '' when the action does not use it. }
-function ShutdownArguments(AAction: TPowerAction): string;
+{ Arguments for shutdown.exe, or '' when the action does not use it. With
+  AForce, an action that can force gets /f, which closes the apps without
+  saving. }
+function ShutdownArguments(AAction: TPowerAction;
+  AForce: Boolean = False): string;
 
 type
   { What the computer supports, of what Sleep and Hibernate need. }
@@ -99,9 +113,12 @@ function PowerActionUnavailableReason(AAction: TPowerAction): string;
   so a planted shutdown.exe next to PowerTimer.exe would be run instead. }
 function ShutdownExePath: string;
 
-{ Performs the action. Returns False and a message in AError when the
-  action could not be started. }
-function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
+{ Performs the action. With AForce, an action that can force closes the
+  apps without saving, instead of waiting for apps that don't close by
+  themselves. Returns False and a message in AError when the action could
+  not be started. }
+function ExecutePowerAction(AAction: TPowerAction; AForce: Boolean;
+  out AError: string): Boolean;
 
 implementation
 
@@ -126,6 +143,7 @@ resourcestring
   rsShutdownExeFailed = 'shutdown.exe %s failed with exit code %d.';
   rsCouldNotLock = 'Could not lock the workstation';
   rsCouldNotSleep = 'Could not put the computer to sleep';
+  rsCouldNotSignOut = 'Could not sign out';
   // DLL name, error message
   rsCouldNotLoad = 'Could not load %s: %s';
   {$ELSE}
@@ -136,6 +154,11 @@ resourcestring
 function PowerActionName(AAction: TPowerAction): string;
 begin
   Result := PowerActionInfo[AAction].Name;
+end;
+
+function PowerActionCanForce(AAction: TPowerAction): Boolean;
+begin
+  Result := PowerActionInfo[AAction].CanForce;
 end;
 
 function PowerActionFromIndex(AIndex: Integer): TPowerAction;
@@ -160,9 +183,16 @@ begin
   end;
 end;
 
-function ShutdownArguments(AAction: TPowerAction): string;
+function ShutdownArguments(AAction: TPowerAction; AForce: Boolean): string;
+var
+  Info: TPowerActionInfo;
 begin
-  Result := PowerActionInfo[AAction].ShutdownArgs;
+  Info := PowerActionInfo[AAction];
+  Result := Info.ShutdownArgs;
+  // Without /f, shutdown.exe /t 0 waits for apps that don't close by
+  // themselves; only a time-out above 0 implies /f
+  if AForce and Info.CanForce and (Info.Kind = akShutdownExe) then
+    Result := Result + ' /f';
 end;
 
 function UnavailableReason(AAction: TPowerAction;
@@ -187,6 +217,9 @@ end;
 const
   ShutdownExeName = 'shutdown.exe';
   PowrProfName = 'powrprof.dll';
+  // The reason of ExitWindowsEx, which the Windows unit lacks
+  SHTDN_REASON_MAJOR_OTHER = $00000000;
+  SHTDN_REASON_FLAG_PLANNED = $80000000;
 
 type
   TSetSuspendState = function(bHibernate, bForce,
@@ -289,7 +322,25 @@ begin
   Result := AWhat + ': ' + SysErrorMessage(GetLastOSError);
 end;
 
-function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
+{ Signs out through ExitWindowsEx: it asks the apps to close, as
+  shutdown.exe /l does, and with AForce closes them without asking. It
+  returns once the sign-out has started. }
+function SignOut(AForce: Boolean; out AError: string): Boolean;
+var
+  Flags: UINT;
+begin
+  AError := '';
+  Flags := EWX_LOGOFF;
+  if AForce then
+    Flags := Flags or EWX_FORCE;
+  Result := ExitWindowsEx(Flags,
+    SHTDN_REASON_MAJOR_OTHER or SHTDN_REASON_FLAG_PLANNED);
+  if not Result then
+    AError := LastErrorText(rsCouldNotSignOut);
+end;
+
+function ExecutePowerAction(AAction: TPowerAction; AForce: Boolean;
+  out AError: string): Boolean;
 var
   SetSuspendState: TSetSuspendState;
 begin
@@ -298,7 +349,9 @@ begin
   // No else: each kind has its branch
   case PowerActionInfo[AAction].Kind of
     akShutdownExe:
-      Result := RunShutdownExe(ShutdownArguments(AAction), AError);
+      Result := RunShutdownExe(ShutdownArguments(AAction, AForce), AError);
+    akSignOut:
+      Result := SignOut(AForce, AError);
     akLockWorkStation:
       begin
         Result := LockWorkStation;
@@ -355,7 +408,8 @@ begin
   Result := '';
 end;
 
-function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
+function ExecutePowerAction(AAction: TPowerAction; AForce: Boolean;
+  out AError: string): Boolean;
 begin
   Result := False;
   AError := Format(rsOnlyOnWindows, [PowerActionName(AAction)]);

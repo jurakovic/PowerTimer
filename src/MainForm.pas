@@ -722,7 +722,7 @@ begin
   // Shutting down, restarting and signing out may end the process without
   // the form being closed normally, so save the settings first.
   SaveCurrentSettings;
-  if not ExecutePowerAction(AAction, Error) then
+  if not ExecutePowerAction(AAction, False, Error) then
     MessageDlg(AppTitle, Error, mtError, [mbOK], 0);
 end;
 

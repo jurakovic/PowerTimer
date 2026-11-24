@@ -18,6 +18,8 @@ type
     procedure PowerActionFromIndex_OutOfRangeIsDefault;
     procedure FillPowerActionList_IndexIsOrdinal;
     procedure ShutdownArguments_PerAction;
+    procedure ShutdownArguments_Forced;
+    procedure CanForce_PerAction;
     procedure ShutdownExePath_IsInSystemDirectory;
     procedure Names_MatchActions;
     procedure Kinds_PerAction;
@@ -82,10 +84,33 @@ procedure TPowerActionsTests.ShutdownArguments_PerAction;
 begin
   AssertEquals('/s /t 0', ShutdownArguments(paShutdown));
   AssertEquals('/r /t 0', ShutdownArguments(paRestart));
-  AssertEquals('/l', ShutdownArguments(paLogoff));
   AssertEquals('/h', ShutdownArguments(paHibernate));
+  // Signing out runs ExitWindowsEx
+  AssertEquals('', ShutdownArguments(paLogoff));
   AssertEquals('', ShutdownArguments(paLock));
   AssertEquals('', ShutdownArguments(paSleep));
+  AssertEquals('not forced', '/s /t 0', ShutdownArguments(paShutdown, False));
+end;
+
+{ Only Shut down and Restart get /f; Hibernate doesn't close the apps. }
+procedure TPowerActionsTests.ShutdownArguments_Forced;
+begin
+  AssertEquals('/s /t 0 /f', ShutdownArguments(paShutdown, True));
+  AssertEquals('/r /t 0 /f', ShutdownArguments(paRestart, True));
+  AssertEquals('/h', ShutdownArguments(paHibernate, True));
+  AssertEquals('', ShutdownArguments(paLogoff, True));
+  AssertEquals('', ShutdownArguments(paLock, True));
+  AssertEquals('', ShutdownArguments(paSleep, True));
+end;
+
+procedure TPowerActionsTests.CanForce_PerAction;
+begin
+  AssertTrue('Shut down', PowerActionCanForce(paShutdown));
+  AssertTrue('Restart', PowerActionCanForce(paRestart));
+  AssertTrue('Sign out', PowerActionCanForce(paLogoff));
+  AssertFalse('Lock', PowerActionCanForce(paLock));
+  AssertFalse('Sleep', PowerActionCanForce(paSleep));
+  AssertFalse('Hibernate', PowerActionCanForce(paHibernate));
 end;
 
 procedure TPowerActionsTests.ShutdownExePath_IsInSystemDirectory;
@@ -115,8 +140,8 @@ begin
   AssertEquals('Hibernate', PowerActionName(paHibernate));
 end;
 
-{ Lock and Sleep are API calls, the others run shutdown.exe; only these
-  have arguments for it. }
+{ Lock, Sleep and Sign out are API calls, the others run shutdown.exe;
+  only these have arguments for it. }
 procedure TPowerActionsTests.Kinds_PerAction;
 var
   Action: TPowerAction;
@@ -124,10 +149,11 @@ var
 begin
   AssertTrue('Lock', PowerActionInfo[paLock].Kind = akLockWorkStation);
   AssertTrue('Sleep', PowerActionInfo[paSleep].Kind = akSuspend);
+  AssertTrue('Sign out', PowerActionInfo[paLogoff].Kind = akSignOut);
   for Action := Low(TPowerAction) to High(TPowerAction) do
   begin
     Info := PowerActionInfo[Action];
-    if Action in [paLock, paSleep] then
+    if Action in [paLock, paSleep, paLogoff] then
       AssertEquals(Info.Name + ' arguments', '', Info.ShutdownArgs)
     else
     begin
