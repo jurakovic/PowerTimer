@@ -189,7 +189,7 @@ The tests of the system directory and of `shutdown.exe`'s path check real paths 
 What the unit tests don't cover, worth checking on a real computer before a release:
 
 - Each action, with *Force apps to close* off and on: with an editor holding an unsaved document, Shut down, Restart and Sign out wait at Windows' *closing apps* screen when off, and close the editor when on.
-- Sleep and Hibernate with hibernation turned off (`powercfg /hibernate off`): *Start* says why and asks; *No* starts nothing.
+- Hibernate with hibernation turned off (`powercfg /hibernate off`): *Start* says how to turn it on and asks; *No* starts nothing. Turning hibernation off doesn't affect Sleep, which *Start* only questions on a computer without a sleep state, e.g. some virtual machines.
 - A countdown of a few minutes: the warning a minute before, above other windows, without taking the keys typed in another program; *Cancel* stops, *+10 min* adds the minutes set in the options and warns again.
 - Put the computer to sleep past the end, then wake it: the warning says that the time passed while asleep, and the action runs a minute later, also with the warning turned off.
 - At time across a change of the clock: set the clock past the time, the action runs at once; set it back, it waits longer.
