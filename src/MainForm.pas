@@ -102,6 +102,7 @@ type
     procedure SetStatusText(const AText: string);
     procedure RunAction(AAction: TPowerAction);
     procedure SetTrayHint(const AHint: string);
+    procedure SetWindowTitle(const ATitle: string);
     procedure HideToTray;
     procedure RestoreFromTray;
   end;
@@ -533,6 +534,7 @@ begin
     btnStart.Caption := rsStart;
     btnStart.Default := True;
     SetTrayHint(AppTitle);
+    SetWindowTitle(AppTitle);
     UpdateIdleStatus;
     tmrStatus.Enabled := True;
   end;
@@ -605,6 +607,9 @@ begin
   SetStatusText(CountdownStatus(skRunning, PowerActionName(FCountdown.Action),
     ANow, EndTime, Seconds, ClockMode and (FCountdown.Entered.Seconds <> 0),
     DefaultFormatSettings));
+  // The taskbar button and Alt+Tab show the title too
+  SetWindowTitle(CountdownTitle(AppTitle, PowerActionName(FCountdown.Action),
+    Seconds));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionName(SelectedAction), FormatRemaining(Seconds)]));
   if (FWarning <> nil) and FWarning.Visible then
@@ -663,6 +668,13 @@ begin
   // countdown timer fires several times per second.
   if trayIcon.Hint <> AHint then
     trayIcon.Hint := AHint;
+end;
+
+procedure TfrmMain.SetWindowTitle(const ATitle: string);
+begin
+  // Only on change, as the tray hint
+  if Caption <> ATitle then
+    Caption := ATitle;
 end;
 
 procedure TfrmMain.FormWindowStateChange(Sender: TObject);

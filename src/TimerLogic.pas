@@ -1,9 +1,9 @@
 unit TimerLogic;
 
 { Pure time calculations: the time arithmetic, the default delay and the
-  texts of the status bar and the warning. The input rules of the time fields are in
-  TimeFields. Has no UI or OS dependencies so it can be unit tested on any
-  platform. }
+  texts of the status bar, the window title and the warning. The input
+  rules of the time fields are in TimeFields. Has no UI or OS dependencies
+  so it can be unit tested on any platform. }
 
 {$mode objfpc}{$H+}
 
@@ -117,6 +117,11 @@ function CountdownStatus(AKind: TStatusKind; const AActionName: string;
   ANow, AEnd: TDateTime; ASeconds: Integer; AShowSeconds: Boolean;
   const AFormat: TFormatSettings): string;
 
+{ The window title while the countdown runs, time left first, so a narrow
+  taskbar button still shows it: '01:12:30 - Shut down - Power Timer'. }
+function CountdownTitle(const AAppTitle, AActionName: string;
+  ARemainingSeconds: Integer): string;
+
 implementation
 
 uses
@@ -148,6 +153,8 @@ resourcestring
   rsStatusClockIdle = '%s %s ' + MiddleDot + ' in %s';
   // Action, end (see rsEndToday), time left
   rsStatusRunning = '%s %s ' + MiddleDot + ' %s left';
+  // Time left (see FormatDuration), action, application title
+  rsCountdownTitle = '%s - %s - %s';
 
 function Clamp(AValue, AMin, AMax: Integer): Integer;
 begin
@@ -308,6 +315,13 @@ begin
     Result := Format(rsStatusRunning,
       [AActionName, EndText, FormatDuration(ASeconds)]);
   end;
+end;
+
+function CountdownTitle(const AAppTitle, AActionName: string;
+  ARemainingSeconds: Integer): string;
+begin
+  Result := Format(rsCountdownTitle,
+    [FormatDuration(ARemainingSeconds), AActionName, AAppTitle]);
 end;
 
 end.

@@ -34,6 +34,7 @@ type
     procedure FormatRemaining_Formats;
     procedure FormatSecondsLeft_Formats;
     procedure FormatDuration_Formats;
+    procedure CountdownTitle_TimeFirst;
     procedure FormatEndTime_SameDay;
     procedure FormatEndTime_NextDayIsTomorrow;
     procedure FormatEndTime_LaterDayShowsTheDate;
@@ -233,6 +234,14 @@ begin
   AssertEquals('86399', '23:59:59', FormatDuration(86399));
   AssertEquals('86400', '24:00:00', FormatDuration(86400));
   AssertEquals('-5', '00:00:00', FormatDuration(-5));
+end;
+
+procedure TTimerLogicTests.CountdownTitle_TimeFirst;
+begin
+  AssertEquals('01:12:30 - Shut down - Power Timer',
+    CountdownTitle('Power Timer', 'Shut down', 4350));
+  AssertEquals('00:00:00 - Lock - Power Timer',
+    CountdownTitle('Power Timer', 'Lock', 0));
 end;
 
 procedure TTimerLogicTests.FormatEndTime_SameDay;
