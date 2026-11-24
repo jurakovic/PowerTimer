@@ -60,9 +60,6 @@ begin
   // shows
   Caption := AppTitle;
   btnPostpone.Caption := Format(rsPostpone, [PostponeMinutes]);
-  // The empty, zero-size panel holds the focus, so a key typed for another
-  // program doesn't press a button
-  ActiveControl := pnlFocusHolder;
 end;
 
 procedure TfrmWarning.ShowWarning(const AActionName: string; ASeconds: Integer);
@@ -74,7 +71,13 @@ begin
   if lblMessage.Caption <> Msg then
     lblMessage.Caption := Msg;
   if not Visible then
+  begin
+    // The empty, zero-size panel holds the focus, so a key typed for
+    // another program doesn't press a button. Set on every show: a click
+    // on a button the last time gave that button the focus.
+    ActiveControl := pnlFocusHolder;
     Show;
+  end;
 end;
 
 procedure TfrmWarning.btnCancelClick(Sender: TObject);
