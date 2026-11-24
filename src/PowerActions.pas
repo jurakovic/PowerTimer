@@ -61,6 +61,8 @@ resourcestring
   rsShutdownExeFailed = 'shutdown.exe %s failed with exit code %d.';
   rsCouldNotLock = 'Could not lock the workstation';
   rsCouldNotSleep = 'Could not put the computer to sleep';
+  // DLL name, error message
+  rsCouldNotLoad = 'Could not load %s: %s';
   {$ELSE}
   // Action name
   rsOnlyOnWindows = '%s is only supported on Windows.';
@@ -104,6 +106,15 @@ end;
 
 const
   ShutdownExeName = 'shutdown.exe';
+  PowrProfName = 'powrprof.dll';
+
+type
+  TSetSuspendState = function(bHibernate, bForce,
+    bWakeupEventsDisabled: ByteBool): ByteBool; stdcall;
+
+var
+  // Loaded on first use by PowrProfFunction
+  PowrProf: THandle = 0;
 
 function ShutdownExePath: string;
 begin
@@ -148,9 +159,28 @@ begin
   end;
 end;
 
+{ user32.dll is one of the known DLLs, which Windows always loads from the
+  system directory, so it can stay imported. }
 function LockWorkStation: BOOL; stdcall; external 'user32.dll';
-function SetSuspendState(bHibernate, bForce, bWakeupEventsDisabled: ByteBool): ByteBool;
-  stdcall; external 'powrprof.dll';
+
+{ The function AName of powrprof.dll, or nil with a message in AError when
+  the DLL or the function can't be loaded. The DLL is loaded from the
+  system directory on first use instead of being imported: Windows loads
+  an imported DLL when Power Timer starts, and since powrprof.dll isn't
+  one of the known DLLs, it would look for it next to PowerTimer.exe
+  first. }
+function PowrProfFunction(const AName: string; out AError: string): Pointer;
+begin
+  AError := '';
+  if PowrProf = 0 then
+    PowrProf := LoadSystemLibrary(PowrProfName);
+  if PowrProf <> 0 then
+    Result := GetProcAddress(PowrProf, PChar(AName))
+  else
+    Result := nil;
+  if Result = nil then
+    AError := Format(rsCouldNotLoad, [PowrProfName, SysErrorMessage(GetLastOSError)]);
+end;
 
 { SetSuspendState requires the shutdown privilege to be enabled in the
   process token; it is present but disabled for interactive users. }
@@ -178,6 +208,8 @@ begin
 end;
 
 function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
+var
+  SetSuspendState: TSetSuspendState;
 begin
   AError := '';
   case AAction of
@@ -191,6 +223,9 @@ begin
       end;
     paSleep:
       begin
+        Pointer(SetSuspendState) := PowrProfFunction('SetSuspendState', AError);
+        if not Assigned(SetSuspendState) then
+          Exit(False);
         EnableShutdownPrivilege;
         Result := SetSuspendState(False, True, True);
         if not Result then
