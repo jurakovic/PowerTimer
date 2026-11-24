@@ -17,6 +17,7 @@ type
   TAppSettings = record
     RememberWindowPos: Boolean;
     WarnZeroTime: Boolean;
+    WarnBeforeAction: Boolean;
     MinimizeToTray: Boolean;
     DefaultAction: TPowerAction;
     DefaultDelayHours: Integer;
@@ -47,6 +48,7 @@ const
   ValPositionX = 'positionX';
   ValPositionY = 'positionY';
   ValWarnZeroTime = 'warnZeroTime';
+  ValWarnBeforeAction = 'warnBeforeAction';
   ValMinimizeToTray = 'minimizeToTray';
   ValDefaultAction = 'defaultAction';
   ValDefaultTimeDelay = 'defaultTimeDelay';
@@ -55,6 +57,7 @@ function DefaultSettings: TAppSettings;
 begin
   Result.RememberWindowPos := False;
   Result.WarnZeroTime := False;
+  Result.WarnBeforeAction := True;
   Result.MinimizeToTray := False;
   Result.DefaultAction := DefaultPowerAction;
   Result.DefaultDelayHours := MinDelayHours;
@@ -107,6 +110,8 @@ begin
         ReadInt(Reg, ValRememberWinPos, Ord(Result.RememberWindowPos)) <> 0;
       Result.WarnZeroTime :=
         ReadInt(Reg, ValWarnZeroTime, Ord(Result.WarnZeroTime)) <> 0;
+      Result.WarnBeforeAction :=
+        ReadInt(Reg, ValWarnBeforeAction, Ord(Result.WarnBeforeAction)) <> 0;
       Result.MinimizeToTray :=
         ReadInt(Reg, ValMinimizeToTray, Ord(Result.MinimizeToTray)) <> 0;
       Result.DefaultAction := PowerActionFromIndex(
@@ -141,6 +146,7 @@ begin
         Exit;
       Reg.WriteInteger(ValRememberWinPos, Ord(S.RememberWindowPos));
       Reg.WriteInteger(ValWarnZeroTime, Ord(S.WarnZeroTime));
+      Reg.WriteInteger(ValWarnBeforeAction, Ord(S.WarnBeforeAction));
       Reg.WriteInteger(ValMinimizeToTray, Ord(S.MinimizeToTray));
       Reg.WriteInteger(ValDefaultAction, Ord(S.DefaultAction));
       Reg.WriteInteger(ValDefaultTimeDelay, S.DefaultDelayHours);

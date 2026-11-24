@@ -1,12 +1,12 @@
 object frmOptions: TfrmOptions
   Left = 400
-  Height = 267
+  Height = 291
   Top = 300
   Width = 400
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Options'
-  ClientHeight = 267
+  ClientHeight = 291
   ClientWidth = 400
   DesignTimePPI = 96
   Font.Height = -12
@@ -118,10 +118,18 @@ object frmOptions: TfrmOptions
     Caption = 'Warn me if countdown time is zero'
     TabOrder = 6
   end
+  object cbWarnBeforeAction: TCheckBox
+    Left = 16
+    Height = 19
+    Top = 206
+    Width = 205
+    Caption = 'Warn 1 minute before the action'
+    TabOrder = 7
+  end
   object bvlButtons: TBevel
     Left = 0
     Height = 2
-    Top = 216
+    Top = 240
     Width = 400
     Anchors = [akTop, akLeft, akRight]
     Shape = bsTopLine
@@ -129,21 +137,21 @@ object frmOptions: TfrmOptions
   object btnOK: TButton
     Left = 228
     Height = 25
-    Top = 230
+    Top = 254
     Width = 75
     Caption = 'OK'
     Default = True
     ModalResult = 1
-    TabOrder = 7
+    TabOrder = 8
   end
   object btnCancel: TButton
     Left = 309
     Height = 25
-    Top = 230
+    Top = 254
     Width = 75
     Cancel = True
     Caption = 'Cancel'
     ModalResult = 2
-    TabOrder = 8
+    TabOrder = 9
   end
 end

@@ -23,6 +23,7 @@ type
     cbDefaultAction: TComboBox;
     cbMinimizeToTray: TCheckBox;
     cbRememberWinPos: TCheckBox;
+    cbWarnBeforeAction: TCheckBox;
     cbWarnZeroTime: TCheckBox;
     edtDefaultDelay: TEdit;
     lblBehaviour: TLabel;
@@ -82,6 +83,7 @@ begin
   cbMinimizeToTray.Checked := ASettings.MinimizeToTray;
   cbRememberWinPos.Checked := ASettings.RememberWindowPos;
   cbWarnZeroTime.Checked := ASettings.WarnZeroTime;
+  cbWarnBeforeAction.Checked := ASettings.WarnBeforeAction;
 end;
 
 procedure TfrmOptions.WriteSettings(var ASettings: TAppSettings);
@@ -91,6 +93,7 @@ begin
   ASettings.MinimizeToTray := cbMinimizeToTray.Checked;
   ASettings.RememberWindowPos := cbRememberWinPos.Checked;
   ASettings.WarnZeroTime := cbWarnZeroTime.Checked;
+  ASettings.WarnBeforeAction := cbWarnBeforeAction.Checked;
 end;
 
 procedure TfrmOptions.SetDelayHours(AHours: Integer);
