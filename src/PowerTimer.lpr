@@ -6,6 +6,10 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
+  // First: its initialization makes later loads of a DLL by name search
+  // only the system directory, and the LCL units after it load DLLs by
+  // name, some already in their own initialization
+  SystemLibraries,
   Interfaces, // LCL widgetset
   Forms,
   MainForm,
