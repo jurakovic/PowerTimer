@@ -92,9 +92,9 @@ end;
 
 procedure TPowerActionsTests.Names_MatchActions;
 begin
-  AssertEquals('Shutdown', PowerActionNames[paShutdown]);
+  AssertEquals('Shut down', PowerActionNames[paShutdown]);
   AssertEquals('Restart', PowerActionNames[paRestart]);
-  AssertEquals('Logoff', PowerActionNames[paLogoff]);
+  AssertEquals('Sign out', PowerActionNames[paLogoff]);
   AssertEquals('Lock', PowerActionNames[paLock]);
   AssertEquals('Sleep', PowerActionNames[paSleep]);
   AssertEquals('Hibernate', PowerActionNames[paHibernate]);

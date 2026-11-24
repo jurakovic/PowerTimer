@@ -621,8 +621,8 @@ procedure TfrmMain.RunAction(AAction: TPowerAction);
 var
   Error: string;
 begin
-  // Shutdown, restart and logoff may end the process without the form
-  // being closed normally, so save the settings first.
+  // Shutting down, restarting and signing out may end the process without
+  // the form being closed normally, so save the settings first.
   SaveCurrentSettings;
   if not ExecutePowerAction(AAction, Error) then
     MessageDlg(AppTitle, Error, mtError, [mbOK], 0);

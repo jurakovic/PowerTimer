@@ -19,7 +19,7 @@ const
   DefaultPowerAction = paShutdown;
 
   PowerActionNames: array[TPowerAction] of string = (
-    'Shutdown', 'Restart', 'Logoff', 'Lock', 'Sleep', 'Hibernate');
+    'Shut down', 'Restart', 'Sign out', 'Lock', 'Sleep', 'Hibernate');
 
 { Maps a list index (e.g. ItemIndex of a combo box or a stored setting)
   to an action. Out of range values give DefaultPowerAction. }

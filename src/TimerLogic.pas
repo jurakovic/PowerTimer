@@ -100,10 +100,10 @@ function FormatEndTime(ANow, AEnd: TDateTime; AShowSeconds: Boolean;
 
 { The text of the status bar: when AActionName runs, at AEnd, and in how
   many seconds (ASeconds), e.g.
-    skCountdownIdle: 'Shutdown at 23:45 if started now · in 01:00:00', or
-      'Shutdown right away if started now' when ASeconds is 0
-    skClockIdle: 'Shutdown tomorrow at 14:00 · in 23:30:00'
-    skRunning: 'Shutdown at 23:45 · 00:42:17 left'
+    skCountdownIdle: 'Shut down at 23:45 if started now · in 01:00:00', or
+      'Shut down right away if started now' when ASeconds is 0
+    skClockIdle: 'Shut down tomorrow at 14:00 · in 23:30:00'
+    skRunning: 'Shut down at 23:45 · 00:42:17 left'
   AShowSeconds and AFormat are passed on to FormatEndTime. }
 function CountdownStatus(AKind: TStatusKind; const AActionName: string;
   ANow, AEnd: TDateTime; ASeconds: Integer; AShowSeconds: Boolean;

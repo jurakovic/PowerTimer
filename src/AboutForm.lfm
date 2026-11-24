@@ -49,7 +49,7 @@ object frmAbout: TfrmAbout
     Top = 43
     Width = 340
     BorderSpacing.Top = 8
-    Caption = 'Shuts down, restarts, logs off, locks, suspends or hibernates'#13#10'the computer after a countdown or at a set time.'
+    Caption = 'Shuts down, restarts, signs out, locks, puts to sleep or hibernates'#13#10'the computer after a countdown or at a set time.'
   end
   object lblLink: TLabel
     Cursor = crHandPoint
