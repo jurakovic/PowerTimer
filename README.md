@@ -9,10 +9,11 @@ A small Windows tool that shuts down, restarts, signs out, locks, puts to sleep 
 
 - **Countdown** – run the action after the entered hours, minutes and seconds
 - **At time** – run the action when the clock shows the entered time (tomorrow if that time has already passed today), also if the clock is changed meanwhile, e.g. to or from daylight saving time
-- The status bar shows when the action will run: in *Countdown* mode if started now, in *At time* mode with *tomorrow* if the entered time has already passed today, and while it waits the end time and the time left; *At time* mode keeps showing the time the action runs at in the fields: the entered time, or later after *+10 min*
+- The status bar shows when the action will run: in *Countdown* mode if started now, in *At time* mode with *tomorrow* if the entered time has already passed today, and while it waits the end time and the time left; *At time* mode keeps showing the time the action runs at in the fields: the entered time, or later after *+10 min* or after sleep
 - Up/Down arrow keys change the focused field; Enter starts the countdown and Esc stops it
 - *Start* warns right away when Sleep or Hibernate isn't available on the computer, e.g. when hibernation is turned off, and asks whether to start anyway
 - A minute before the action runs, a warning above all other windows counts down the last seconds, with *Cancel*, which stops the countdown, and *+10 min*, which runs the action 10 minutes later and warns again a minute before; none for a countdown of a minute or less, and it can be turned off in the options
+- When the computer was asleep or hibernating at the time the action was to run, the action doesn't run on waking without notice: the warning announces it, and it runs a minute after waking, also when the warning a minute before is turned off
 - Optional minimize to the system tray, with the remaining time in the tray tooltip
 - Options for the default action, the default time delay, remembering the window position, a warning for a zero countdown and the warning a minute before the action, in the Options dialog: *Options* in the status bar opens it (Alt+O), next to *About* (Alt+A), and *OK* applies them and stores them in `HKEY_CURRENT_USER\Software\Power Timer`
 

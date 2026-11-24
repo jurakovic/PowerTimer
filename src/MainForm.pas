@@ -536,7 +536,9 @@ begin
 end;
 
 { WarnSeconds before the end, unless the warning is turned off in the
-  options or the countdown is no longer than that. }
+  options or the countdown is no longer than that. Also on waking, whatever
+  the options say, when the end passed while the computer was asleep: the
+  action then runs WakeGraceSeconds later. }
 procedure TfrmMain.CountdownWarn(Sender: TObject);
 begin
   if FWarning = nil then

@@ -4,7 +4,9 @@ unit CountdownTests;
   recorded in a log, so their order is checked too: 'change:1;' for
   OnChange while running and 'change:0;' when not, since the main form's
   handler reads Running, 'run:<ordinal>;' for OnRunAction and 'warn;' for
-  OnWarn. }
+  OnWarn. A tick more than SleepGapMs after the one before means that the
+  computer slept, so the tests that reach the end tick shortly before it,
+  as the main form's timer does. }
 
 {$mode objfpc}{$H+}
 
@@ -25,6 +27,8 @@ type
     procedure CountdownChange(Sender: TObject);
     procedure CountdownRunAction(AAction: TPowerAction);
     procedure CountdownWarn(Sender: TObject);
+    function NowAt(ATicks: QWord): TDateTime;
+    procedure TickEvery250Ms(AFromTicks, AToTicks: QWord);
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -54,6 +58,14 @@ type
     procedure Postpone_KeepsTheEnteredTime;
     procedure Postpone_WhenIdleDoesNothing;
     procedure Start_AfterAWarningWarnsAgain;
+    procedure Sleep_CountdownEndPassedIsAnnouncedFirst;
+    procedure Sleep_ClockTimeEndPassedIsAnnouncedFirst;
+    procedure Sleep_AnnouncedAlsoWithZeroWarnSeconds;
+    procedure Sleep_BeforeTheEndGoesOn;
+    procedure Sleep_NoGapRunsTheActionAtTheEnd;
+    procedure Sleep_StopDuringTheAnnouncementRunsNothing;
+    procedure Sleep_PostponeDuringTheAnnouncement;
+    procedure Sleep_AgainDuringTheAnnouncementAnnouncesAgain;
   end;
 
 implementation
@@ -82,6 +94,27 @@ begin
     FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AExpected),
     FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', AActual)]),
     SameDateTime(AExpected, AActual));
+end;
+
+{ The tests that sleep start at the tick count 1000 at FNow, and the clock
+  moves on with the ticks. }
+function TCountdownTests.NowAt(ATicks: QWord): TDateTime;
+begin
+  Result := FNow + (Int64(ATicks) - 1000) / MSecsPerDay;
+end;
+
+{ Ticks as the main form's timer does while the computer is awake: every
+  250 ms after AFromTicks, up to AToTicks. }
+procedure TCountdownTests.TickEvery250Ms(AFromTicks, AToTicks: QWord);
+var
+  Ticks: QWord;
+begin
+  Ticks := AFromTicks + 250;
+  while Ticks <= AToTicks do
+  begin
+    FCountdown.Tick(NowAt(Ticks), Ticks);
+    Inc(Ticks, 250);
+  end;
 end;
 
 procedure TCountdownTests.SetUp;
@@ -204,6 +237,8 @@ begin
   AssertTrue('running at 06:00', FCountdown.Running);
   AssertEquals('at 06:00', SecondsPerHour, FCountdown.RemainingSeconds(
     EncodeDateTime(2024, 10, 27, 6, 0, 0, 0), 1000 + 8 * SecondsPerHour * MSecsPerSecond));
+  FCountdown.Tick(EncodeDateTime(2024, 10, 27, 6, 59, 59, 0),
+    1000 + 9 * SecondsPerHour * MSecsPerSecond - MSecsPerSecond);
   FCountdown.Tick(EncodeDateTime(2024, 10, 27, 7, 0, 0, 0),
     1000 + 9 * SecondsPerHour * MSecsPerSecond);
   AssertFalse('running at 07:00', FCountdown.Running);
@@ -272,6 +307,7 @@ begin
   AssertEquals('60 s left', 'change:1;warn;', FLog);
   FCountdown.Tick(FNow, 62000);
   AssertEquals('59 s left', 'change:1;warn;', FLog);
+  FCountdown.Tick(FNow, 120000);
   FCountdown.Tick(FNow, 121000);
   AssertEquals('at the end', 'change:1;warn;change:0;run:3;', FLog);
 end;
@@ -282,6 +318,7 @@ begin
   FCountdown.Start(cmCountdown, MakeTimeParts(0, 1, 0), paLock, FNow, 1000);
   FCountdown.Tick(FNow, 1000);
   FCountdown.Tick(FNow, 30000);
+  FCountdown.Tick(FNow, 60000);
   FCountdown.Tick(FNow, 61000);
   AssertEquals('60 s', 'change:1;change:0;run:3;', FLog);
 
@@ -329,6 +366,7 @@ begin
   AssertEquals('at the old end', 'change:1;warn;', FLog);
   FCountdown.Tick(IncSecond(FNow, 660), 661000);
   AssertEquals('60 s before the new end', 'change:1;warn;warn;', FLog);
+  FCountdown.Tick(IncSecond(FNow, 719), 720000);
   FCountdown.Tick(IncSecond(FNow, 720), 721000);
   AssertEquals('at the new end', 'change:1;warn;warn;change:0;run:3;', FLog);
 end;
@@ -381,6 +419,160 @@ begin
   FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 100000);
   FCountdown.Tick(FNow, 160000);
   AssertEquals('log', 'change:1;warn;change:0;change:1;warn;', FLog);
+end;
+
+{ 2 minutes, 30 seconds awake, then 3 hours asleep: on waking the action is
+  announced and runs a minute later. }
+procedure TCountdownTests.Sleep_CountdownEndPassedIsAnnouncedFirst;
+var
+  Wake: QWord;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  AssertFalse('before sleeping', FCountdown.EndedDuringSleep);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  AssertTrue('running', FCountdown.Running);
+  AssertTrue('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('remaining', WakeGraceSeconds,
+    FCountdown.RemainingSeconds(NowAt(Wake), Wake));
+  CheckDateTime('end', IncSecond(NowAt(Wake), WakeGraceSeconds),
+    FCountdown.EndTime(NowAt(Wake), Wake));
+  AssertEquals('on waking', 'change:1;warn;', FLog);
+  TickEvery250Ms(Wake, Wake + WakeGraceSeconds * MSecsPerSecond - 250);
+  AssertEquals('before the new end', 'change:1;warn;', FLog);
+  FCountdown.Tick(NowAt(Wake + WakeGraceSeconds * MSecsPerSecond),
+    Wake + WakeGraceSeconds * MSecsPerSecond);
+  AssertEquals('at the new end', 'change:1;warn;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Sleep_ClockTimeEndPassedIsAnnouncedFirst;
+var
+  Wake: QWord;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmClockTime, MakeTimeParts(12, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  AssertTrue('running', FCountdown.Running);
+  AssertTrue('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('remaining', WakeGraceSeconds,
+    FCountdown.RemainingSeconds(NowAt(Wake), Wake));
+  CheckDateTime('end', IncSecond(NowAt(Wake), WakeGraceSeconds),
+    FCountdown.EndTime(NowAt(Wake), Wake));
+  AssertEquals('on waking', 'change:1;warn;', FLog);
+  TickEvery250Ms(Wake, Wake + WakeGraceSeconds * MSecsPerSecond - 250);
+  AssertEquals('before the new end', 'change:1;warn;', FLog);
+  FCountdown.Tick(NowAt(Wake + WakeGraceSeconds * MSecsPerSecond),
+    Wake + WakeGraceSeconds * MSecsPerSecond);
+  AssertEquals('at the new end', 'change:1;warn;change:0;run:3;', FLog);
+end;
+
+{ The warning turned off in the options is about the minute before the end;
+  an end missed during sleep is announced all the same. }
+procedure TCountdownTests.Sleep_AnnouncedAlsoWithZeroWarnSeconds;
+var
+  Wake: QWord;
+begin
+  FCountdown.WarnSeconds := 0;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  AssertTrue('running', FCountdown.Running);
+  AssertTrue('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('log', 'change:1;warn;', FLog);
+end;
+
+{ 10 minutes asleep during a 2-hour countdown: it goes on as before. }
+procedure TCountdownTests.Sleep_BeforeTheEndGoesOn;
+var
+  Wake: QWord;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(2, 0, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 10 * SecondsPerMinute * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  AssertTrue('running', FCountdown.Running);
+  AssertFalse('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('remaining', 2 * SecondsPerHour - 30 - 10 * SecondsPerMinute,
+    FCountdown.RemainingSeconds(NowAt(Wake), Wake));
+  CheckDateTime('end', IncHour(FNow, 2), FCountdown.EndTime(NowAt(Wake), Wake));
+  AssertEquals('log', 'change:1;', FLog);
+end;
+
+procedure TCountdownTests.Sleep_NoGapRunsTheActionAtTheEnd;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 121000);
+  AssertFalse('running', FCountdown.Running);
+  AssertFalse('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('log', 'change:1;warn;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Sleep_StopDuringTheAnnouncementRunsNothing;
+var
+  Wake: QWord;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  FCountdown.Stop;
+  TickEvery250Ms(Wake, Wake + 2 * WakeGraceSeconds * MSecsPerSecond);
+  AssertFalse('running', FCountdown.Running);
+  AssertEquals('log', 'change:1;warn;change:0;', FLog);
+end;
+
+procedure TCountdownTests.Sleep_PostponeDuringTheAnnouncement;
+var
+  Wake: QWord;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  FCountdown.Postpone(10 * SecondsPerMinute);
+  AssertFalse('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('remaining', WakeGraceSeconds + 10 * SecondsPerMinute,
+    FCountdown.RemainingSeconds(NowAt(Wake), Wake));
+  // The usual warning 60 seconds before the new end
+  TickEvery250Ms(Wake, Wake + 10 * SecondsPerMinute * MSecsPerSecond);
+  AssertTrue('running', FCountdown.Running);
+  AssertEquals('log', 'change:1;warn;warn;', FLog);
+end;
+
+{ Asleep again during the minute after waking, past the new end: it is
+  announced again. }
+procedure TCountdownTests.Sleep_AgainDuringTheAnnouncementAnnouncesAgain;
+var
+  Wake, Wake2: QWord;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, NowAt(1000),
+    1000);
+  TickEvery250Ms(1000, 31000);
+  Wake := 31000 + 3 * SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake), Wake);
+  TickEvery250Ms(Wake, Wake + 20000);
+  Wake2 := Wake + 20000 + SecondsPerHour * MSecsPerSecond;
+  FCountdown.Tick(NowAt(Wake2), Wake2);
+  AssertTrue('running', FCountdown.Running);
+  AssertTrue('ended during sleep', FCountdown.EndedDuringSleep);
+  AssertEquals('remaining', WakeGraceSeconds,
+    FCountdown.RemainingSeconds(NowAt(Wake2), Wake2));
+  AssertEquals('log', 'change:1;warn;warn;', FLog);
 end;
 
 initialization
