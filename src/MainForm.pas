@@ -787,11 +787,19 @@ function InvalidateRect(hWnd: HWND; lpRect: Pointer;
   it repaints from the menu's current texts. Only called while the tray
   menu is open, which captures the mouse, so the open menu is that one. }
 procedure RepaintOpenMenu;
+{$IFDEF WINDOWS}
+var
+  Menu: HWND;
 begin
-  {$IFDEF WINDOWS}
-  InvalidateRect(FindWindowA('#32768', nil), nil, False);
-  {$ENDIF}
+  Menu := FindWindowA('#32768', nil);
+  // A 0 handle would repaint every window on the screen
+  if Menu <> 0 then
+    InvalidateRect(Menu, nil, False);
 end;
+{$ELSE}
+begin
+end;
+{$ENDIF}
 
 function TfrmMain.TrayTimeLeftText(ASeconds: Integer): string;
 begin
