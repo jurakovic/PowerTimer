@@ -157,8 +157,9 @@ resourcestring
   rsTrayHintRunning = '%s - %s after %s';
   // Minutes; the link in the status bar, with its access key (Alt+M)
   rsAddTimeLink = '+%d &min';
-  // Minutes; the tray menu's item
+  // Minutes, more than one; the tray menu's item
   rsAddTimeMenu = 'Add %d minutes';
+  rsAddOneMinuteMenu = 'Add 1 minute';
 
 { TfrmMain }
 
@@ -644,7 +645,10 @@ end;
 procedure TfrmMain.UpdateAddTimeCaptions;
 begin
   lblAddTime.Caption := Format(rsAddTimeLink, [FSettings.AddMinutes]);
-  miAddTime.Caption := Format(rsAddTimeMenu, [FSettings.AddMinutes]);
+  if FSettings.AddMinutes = 1 then
+    miAddTime.Caption := rsAddOneMinuteMenu
+  else
+    miAddTime.Caption := Format(rsAddTimeMenu, [FSettings.AddMinutes]);
   if FWarning <> nil then
     FWarning.SetPostponeMinutes(FSettings.AddMinutes);
 end;
