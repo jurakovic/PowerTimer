@@ -15,6 +15,7 @@ uses
   MainForm,
   AboutForm,
   OptionsForm,
+  WarningForm,
   AccessKeyLabel,
   AppInfo,
   TimerLogic,

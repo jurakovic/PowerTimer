@@ -74,7 +74,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="13">
       <Unit0>
         <Filename Value="PowerTimer.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -132,6 +132,13 @@
         <Filename Value="SystemLibraries.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit11>
+      <Unit12>
+        <Filename Value="WarningForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmWarning"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit12>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
