@@ -18,6 +18,8 @@ type
     RememberWindowPos: Boolean;
     WarnZeroTime: Boolean;
     WarnBeforeAction: Boolean;
+    // Shut down, Restart and Sign out close the apps without saving
+    ForceActions: Boolean;
     MinimizeToTray: Boolean;
     DefaultAction: TPowerAction;
     DefaultDelayHours: Integer;
@@ -49,6 +51,7 @@ const
   ValPositionY = 'positionY';
   ValWarnZeroTime = 'warnZeroTime';
   ValWarnBeforeAction = 'warnBeforeAction';
+  ValForceActions = 'forceActions';
   ValMinimizeToTray = 'minimizeToTray';
   ValDefaultAction = 'defaultAction';
   ValDefaultTimeDelay = 'defaultTimeDelay';
@@ -58,6 +61,8 @@ begin
   Result.RememberWindowPos := False;
   Result.WarnZeroTime := False;
   Result.WarnBeforeAction := True;
+  // Off, since forcing loses unsaved work
+  Result.ForceActions := False;
   Result.MinimizeToTray := False;
   Result.DefaultAction := DefaultPowerAction;
   Result.DefaultDelayHours := MinDelayHours;
@@ -112,6 +117,8 @@ begin
         ReadInt(Reg, ValWarnZeroTime, Ord(Result.WarnZeroTime)) <> 0;
       Result.WarnBeforeAction :=
         ReadInt(Reg, ValWarnBeforeAction, Ord(Result.WarnBeforeAction)) <> 0;
+      Result.ForceActions :=
+        ReadInt(Reg, ValForceActions, Ord(Result.ForceActions)) <> 0;
       Result.MinimizeToTray :=
         ReadInt(Reg, ValMinimizeToTray, Ord(Result.MinimizeToTray)) <> 0;
       Result.DefaultAction := PowerActionFromIndex(
@@ -147,6 +154,7 @@ begin
       Reg.WriteInteger(ValRememberWinPos, Ord(S.RememberWindowPos));
       Reg.WriteInteger(ValWarnZeroTime, Ord(S.WarnZeroTime));
       Reg.WriteInteger(ValWarnBeforeAction, Ord(S.WarnBeforeAction));
+      Reg.WriteInteger(ValForceActions, Ord(S.ForceActions));
       Reg.WriteInteger(ValMinimizeToTray, Ord(S.MinimizeToTray));
       Reg.WriteInteger(ValDefaultAction, Ord(S.DefaultAction));
       Reg.WriteInteger(ValDefaultTimeDelay, S.DefaultDelayHours);

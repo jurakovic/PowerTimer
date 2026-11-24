@@ -78,6 +78,7 @@ begin
   AssertFalse(S.RememberWindowPos);
   AssertFalse(S.WarnZeroTime);
   AssertTrue(S.WarnBeforeAction);
+  AssertFalse(S.ForceActions);
   AssertFalse(S.MinimizeToTray);
   AssertTrue(S.DefaultAction = paShutdown);
   AssertEquals(1, S.DefaultDelayHours);
@@ -106,6 +107,7 @@ begin
   AssertEquals(D.RememberWindowPos, S.RememberWindowPos);
   AssertEquals(D.WarnZeroTime, S.WarnZeroTime);
   AssertEquals(D.WarnBeforeAction, S.WarnBeforeAction);
+  AssertEquals(D.ForceActions, S.ForceActions);
   AssertEquals(D.MinimizeToTray, S.MinimizeToTray);
   AssertTrue(D.DefaultAction = S.DefaultAction);
   AssertEquals(D.DefaultDelayHours, S.DefaultDelayHours);
@@ -121,6 +123,7 @@ begin
   S.RememberWindowPos := True;
   S.WarnZeroTime := True;
   S.WarnBeforeAction := False;
+  S.ForceActions := True;
   S.MinimizeToTray := True;
   S.DefaultAction := paHibernate;
   S.DefaultDelayHours := 7;
@@ -133,6 +136,7 @@ begin
   AssertTrue(L.RememberWindowPos);
   AssertTrue(L.WarnZeroTime);
   AssertFalse(L.WarnBeforeAction);
+  AssertTrue(L.ForceActions);
   AssertTrue(L.MinimizeToTray);
   AssertTrue(L.DefaultAction = paHibernate);
   AssertEquals(7, L.DefaultDelayHours);

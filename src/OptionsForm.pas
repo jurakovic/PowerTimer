@@ -21,6 +21,7 @@ type
     btnOK: TButton;
     bvlButtons: TBevel;
     cbDefaultAction: TComboBox;
+    cbForceActions: TCheckBox;
     cbMinimizeToTray: TCheckBox;
     cbRememberWinPos: TCheckBox;
     cbWarnBeforeAction: TCheckBox;
@@ -29,6 +30,7 @@ type
     lblBehaviour: TLabel;
     lblDefaultAction: TLabel;
     lblDefaultDelay: TLabel;
+    lblForceActionsNote: TLabel;
     lblOnStartup: TLabel;
     procedure btnDelayMinusClick(Sender: TObject);
     procedure btnDelayPlusClick(Sender: TObject);
@@ -84,6 +86,7 @@ begin
   cbRememberWinPos.Checked := ASettings.RememberWindowPos;
   cbWarnZeroTime.Checked := ASettings.WarnZeroTime;
   cbWarnBeforeAction.Checked := ASettings.WarnBeforeAction;
+  cbForceActions.Checked := ASettings.ForceActions;
 end;
 
 procedure TfrmOptions.WriteSettings(var ASettings: TAppSettings);
@@ -94,6 +97,7 @@ begin
   ASettings.RememberWindowPos := cbRememberWinPos.Checked;
   ASettings.WarnZeroTime := cbWarnZeroTime.Checked;
   ASettings.WarnBeforeAction := cbWarnBeforeAction.Checked;
+  ASettings.ForceActions := cbForceActions.Checked;
 end;
 
 procedure TfrmOptions.SetDelayHours(AHours: Integer);
