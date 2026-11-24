@@ -33,6 +33,45 @@ procedure FillPowerActionList(AItems: TStrings);
 { Arguments for shutdown.exe, or '' when the action does not use it. }
 function ShutdownArguments(AAction: TPowerAction): string;
 
+type
+  { What the computer supports, of what Sleep and Hibernate need. }
+  TPowerCapabilities = record
+    SystemS1, SystemS2, SystemS3: Boolean; // sleep states
+    SystemS4: Boolean; // hibernation
+    HiberFilePresent: Boolean; // hibernation is turned on
+    AoAc: Boolean; // Modern Standby
+  end;
+
+  { SYSTEM_POWER_CAPABILITIES of the Windows SDK, as GetPwrCapabilities
+    fills it: the fields up to AoAc, then the rest of its 76 bytes. In the
+    interface so the tests can check its layout. }
+  TSystemPowerCapabilities = packed record
+    PowerButtonPresent, SleepButtonPresent, LidPresent: ByteBool;
+    SystemS1, SystemS2, SystemS3, SystemS4, SystemS5: ByteBool;
+    HiberFilePresent: ByteBool;
+    FullWake, VideoDimPresent, ApmPresent, UpsPresent: ByteBool;
+    ThermalControl, ProcessorThrottle: ByteBool;
+    ProcessorMinThrottle, ProcessorMaxThrottle: Byte;
+    FastSystemS4, Hiberboot, WakeAlarmPresent: ByteBool;
+    AoAc: ByteBool;
+    Rest: array[21..75] of Byte;
+  end;
+
+{ Why AAction can't run with ACaps, or '' when it can. Sleep needs one of
+  the sleep states S1 to S3, or Modern Standby, on which Windows reports
+  no sleep state although SetSuspendState puts the computer to sleep.
+  Hibernate needs S4 and the hibernation file; without the file,
+  hibernation is turned off, and the reason says how to turn it on. The
+  other actions are always available. }
+function UnavailableReason(AAction: TPowerAction;
+  const ACaps: TPowerCapabilities): string;
+
+{ UnavailableReason for this computer, with its capabilities from
+  GetPwrCapabilities. Only Sleep and Hibernate are checked; when the
+  capabilities can't be read, the action counts as available (always ''
+  on other platforms). }
+function PowerActionUnavailableReason(AAction: TPowerAction): string;
+
 { Full path of shutdown.exe in the Windows system directory, or '' when that
   directory cannot be determined (always '' on other platforms). Starting a
   bare 'shutdown.exe' would look in the application's own directory first,
@@ -52,6 +91,11 @@ uses
   SysUtils;
 
 resourcestring
+  rsSleepNotSupported = 'Sleep is not supported on this computer.';
+  rsHibernateNotSupported = 'Hibernation is not supported on this computer.';
+  rsHibernationOff = 'Hibernation is turned off on this computer. It can be '
+    + 'turned on with "powercfg /hibernate on" in a command prompt run as '
+    + 'administrator.';
   {$IFDEF WINDOWS}
   // shutdown.exe
   rsShutdownExeNotFound = 'Could not find %s: the Windows system directory is unknown.';
@@ -102,6 +146,23 @@ begin
   end;
 end;
 
+function UnavailableReason(AAction: TPowerAction;
+  const ACaps: TPowerCapabilities): string;
+begin
+  Result := '';
+  case AAction of
+    paSleep:
+      if not (ACaps.SystemS1 or ACaps.SystemS2 or ACaps.SystemS3
+        or ACaps.AoAc) then
+        Result := rsSleepNotSupported;
+    paHibernate:
+      if not ACaps.SystemS4 then
+        Result := rsHibernateNotSupported
+      else if not ACaps.HiberFilePresent then
+        Result := rsHibernationOff;
+  end;
+end;
+
 {$IFDEF WINDOWS}
 
 const
@@ -111,6 +172,8 @@ const
 type
   TSetSuspendState = function(bHibernate, bForce,
     bWakeupEventsDisabled: ByteBool): ByteBool; stdcall;
+  TGetPwrCapabilities = function(
+    var lpspc: TSystemPowerCapabilities): ByteBool; stdcall;
 
 var
   // Loaded on first use by PowrProfFunction
@@ -239,6 +302,33 @@ begin
   end;
 end;
 
+function PowerActionUnavailableReason(AAction: TPowerAction): string;
+var
+  GetPwrCapabilities: TGetPwrCapabilities;
+  Error: string;
+  SystemCaps: TSystemPowerCapabilities;
+  Caps: TPowerCapabilities;
+begin
+  Result := '';
+  if not (AAction in [paSleep, paHibernate]) then
+    Exit;
+  // Unknown capabilities don't stop the action: an error still shows when
+  // it runs
+  Pointer(GetPwrCapabilities) := PowrProfFunction('GetPwrCapabilities', Error);
+  if not Assigned(GetPwrCapabilities) then
+    Exit;
+  FillChar(SystemCaps, SizeOf(SystemCaps), 0);
+  if not GetPwrCapabilities(SystemCaps) then
+    Exit;
+  Caps.SystemS1 := SystemCaps.SystemS1;
+  Caps.SystemS2 := SystemCaps.SystemS2;
+  Caps.SystemS3 := SystemCaps.SystemS3;
+  Caps.SystemS4 := SystemCaps.SystemS4;
+  Caps.HiberFilePresent := SystemCaps.HiberFilePresent;
+  Caps.AoAc := SystemCaps.AoAc;
+  Result := UnavailableReason(AAction, Caps);
+end;
+
 {$ELSE}
 
 function ShutdownExePath: string;
@@ -250,6 +340,11 @@ function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
 begin
   Result := False;
   AError := Format(rsOnlyOnWindows, [PowerActionNames[AAction]]);
+end;
+
+function PowerActionUnavailableReason(AAction: TPowerAction): string;
+begin
+  Result := '';
 end;
 
 {$ENDIF}

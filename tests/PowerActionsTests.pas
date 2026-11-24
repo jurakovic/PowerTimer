@@ -20,9 +20,23 @@ type
     procedure ShutdownArguments_PerAction;
     procedure ShutdownExePath_IsInSystemDirectory;
     procedure Names_MatchActions;
+    procedure UnavailableReason_Sleep;
+    procedure UnavailableReason_Hibernate;
+    procedure UnavailableReason_OtherActionsAlwaysAvailable;
+    procedure SystemPowerCapabilities_MatchesTheWindowsLayout;
   end;
 
 implementation
+
+function Caps(AS1, AS2, AS3, AS4, AHiberFile, AAoAc: Boolean): TPowerCapabilities;
+begin
+  Result.SystemS1 := AS1;
+  Result.SystemS2 := AS2;
+  Result.SystemS3 := AS3;
+  Result.SystemS4 := AS4;
+  Result.HiberFilePresent := AHiberFile;
+  Result.AoAc := AAoAc;
+end;
 
 procedure TPowerActionsTests.PowerActionFromIndex_MatchesStoredOrder;
 begin
@@ -98,6 +112,53 @@ begin
   AssertEquals('Lock', PowerActionNames[paLock]);
   AssertEquals('Sleep', PowerActionNames[paSleep]);
   AssertEquals('Hibernate', PowerActionNames[paHibernate]);
+end;
+
+procedure TPowerActionsTests.UnavailableReason_Sleep;
+begin
+  AssertEquals('S1', '', UnavailableReason(paSleep,
+    Caps(True, False, False, False, False, False)));
+  AssertEquals('S3', '', UnavailableReason(paSleep,
+    Caps(False, False, True, False, False, False)));
+  AssertEquals('Modern Standby only', '', UnavailableReason(paSleep,
+    Caps(False, False, False, False, False, True)));
+  AssertEquals('none', 'Sleep is not supported on this computer.',
+    UnavailableReason(paSleep, Caps(False, False, False, True, True, False)));
+end;
+
+procedure TPowerActionsTests.UnavailableReason_Hibernate;
+begin
+  AssertEquals('S4 and the file', '', UnavailableReason(paHibernate,
+    Caps(False, False, False, True, True, False)));
+  AssertEquals('S4 without the file', 'Hibernation is turned off on this '
+    + 'computer. It can be turned on with "powercfg /hibernate on" in a '
+    + 'command prompt run as administrator.', UnavailableReason(paHibernate,
+    Caps(True, True, True, True, False, False)));
+  AssertEquals('no S4', 'Hibernation is not supported on this computer.',
+    UnavailableReason(paHibernate, Caps(True, True, True, False, True, True)));
+end;
+
+procedure TPowerActionsTests.UnavailableReason_OtherActionsAlwaysAvailable;
+var
+  None: TPowerCapabilities;
+begin
+  None := Caps(False, False, False, False, False, False);
+  AssertEquals('Shut down', '', UnavailableReason(paShutdown, None));
+  AssertEquals('Restart', '', UnavailableReason(paRestart, None));
+  AssertEquals('Sign out', '', UnavailableReason(paLogoff, None));
+  AssertEquals('Lock', '', UnavailableReason(paLock, None));
+end;
+
+procedure TPowerActionsTests.SystemPowerCapabilities_MatchesTheWindowsLayout;
+var
+  R: TSystemPowerCapabilities;
+begin
+  // The offsets of SYSTEM_POWER_CAPABILITIES in the Windows SDK
+  AssertEquals('size', 76, SizeOf(R));
+  AssertEquals('SystemS1', 3, PByte(@R.SystemS1) - PByte(@R));
+  AssertEquals('SystemS4', 6, PByte(@R.SystemS4) - PByte(@R));
+  AssertEquals('HiberFilePresent', 8, PByte(@R.HiberFilePresent) - PByte(@R));
+  AssertEquals('AoAc', 20, PByte(@R.AoAc) - PByte(@R));
 end;
 
 initialization
