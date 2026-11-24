@@ -1,9 +1,9 @@
 unit TimerLogic;
 
 { Pure time calculations: the time arithmetic, the default delay and the
-  texts of the status bar, the window title and the warning. The input
-  rules of the time fields are in TimeFields. Has no UI or OS dependencies
-  so it can be unit tested on any platform. }
+  texts of the status bar, the window title, the tray menu and the warning.
+  The input rules of the time fields are in TimeFields. Has no UI or OS
+  dependencies so it can be unit tested on any platform. }
 
 {$mode objfpc}{$H+}
 
@@ -128,6 +128,11 @@ function CountdownStatus(AKind: TStatusKind; const AActionName: string;
 function CountdownTitle(const AAppTitle, AActionName: string;
   ARemainingSeconds: Integer): string;
 
+{ The tray menu's first line while the countdown runs:
+  'Shut down in 00:42:17'. }
+function TrayTimeLeft(const AActionName: string;
+  ARemainingSeconds: Integer): string;
+
 implementation
 
 uses
@@ -161,6 +166,8 @@ resourcestring
   rsStatusRunning = '%s %s ' + MiddleDot + ' %s left';
   // Time left (see FormatDuration), action, application title
   rsCountdownTitle = '%s - %s - %s';
+  // Action, time left (see FormatDuration)
+  rsTrayTimeLeft = '%s in %s';
 
 function Clamp(AValue, AMin, AMax: Integer): Integer;
 begin
@@ -333,6 +340,13 @@ function CountdownTitle(const AAppTitle, AActionName: string;
 begin
   Result := Format(rsCountdownTitle,
     [FormatDuration(ARemainingSeconds), AActionName, AAppTitle]);
+end;
+
+function TrayTimeLeft(const AActionName: string;
+  ARemainingSeconds: Integer): string;
+begin
+  Result := Format(rsTrayTimeLeft,
+    [AActionName, FormatDuration(ARemainingSeconds)]);
 end;
 
 end.

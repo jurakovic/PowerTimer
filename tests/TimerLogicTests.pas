@@ -36,6 +36,7 @@ type
     procedure FormatSecondsLeft_Formats;
     procedure FormatDuration_Formats;
     procedure CountdownTitle_TimeFirst;
+    procedure TrayTimeLeft_ActionThenTime;
     procedure FormatEndTime_SameDay;
     procedure FormatEndTime_NextDayIsTomorrow;
     procedure FormatEndTime_LaterDayShowsTheDate;
@@ -251,6 +252,12 @@ begin
     CountdownTitle('Power Timer', 'Shut down', 4350));
   AssertEquals('00:00:00 - Lock - Power Timer',
     CountdownTitle('Power Timer', 'Lock', 0));
+end;
+
+procedure TTimerLogicTests.TrayTimeLeft_ActionThenTime;
+begin
+  AssertEquals('Shut down in 00:42:17', TrayTimeLeft('Shut down', 2537));
+  AssertEquals('Lock in 00:00:00', TrayTimeLeft('Lock', 0));
 end;
 
 procedure TTimerLogicTests.FormatEndTime_SameDay;

@@ -124,7 +124,6 @@ type
     procedure SetStatusText(const AText: string);
     procedure RunAction(AAction: TPowerAction);
     procedure SetTrayHint(const AHint: string);
-    function TrayTimeLeftText(ASeconds: Integer): string;
     procedure SetTrayTimeLeft(ASeconds: Integer);
     procedure SetWindowTitle(const ATitle: string);
     procedure HideToTray;
@@ -156,8 +155,6 @@ resourcestring
   rsEndedDuringSleep = 'The time passed while the computer was asleep.';
   // Application title, action, remaining time
   rsTrayHintRunning = '%s - %s after %s';
-  // The tray menu's first line: action, time left (see FormatDuration)
-  rsTrayTimeLeft = '%s in %s';
   // Minutes; the link in the status bar, with its access key (Alt+M)
   rsAddTimeLink = '+%d &min';
   // Minutes; the tray menu's item
@@ -801,19 +798,13 @@ begin
 end;
 {$ENDIF}
 
-function TfrmMain.TrayTimeLeftText(ASeconds: Integer): string;
-begin
-  Result := Format(rsTrayTimeLeft, [PowerActionName(FCountdown.Action),
-    FormatDuration(ASeconds)]);
-end;
-
 { The tray menu's first line, while running. The countdown timer keeps
   firing while the menu is open, so it counts down there too. }
 procedure TfrmMain.SetTrayTimeLeft(ASeconds: Integer);
 var
   TimeLeft: string;
 begin
-  TimeLeft := TrayTimeLeftText(ASeconds);
+  TimeLeft := TrayTimeLeft(PowerActionName(FCountdown.Action), ASeconds);
   // Only on change: the countdown timer fires several times per second
   if miTimeLeft.Caption = TimeLeft then
     Exit;
