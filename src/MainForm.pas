@@ -93,6 +93,7 @@ type
     procedure StartCountdown;
     procedure CountdownChange(Sender: TObject);
     procedure CountdownWarn(Sender: TObject);
+    function WarningDetail: string;
     procedure WarningCancelCountdown(Sender: TObject);
     procedure WarningPostpone(Sender: TObject);
     procedure PostponeCountdown(ASeconds: Integer);
@@ -126,6 +127,8 @@ resourcestring
   // After the reason why the selected action can't run
   rsStartAnyway = 'Start anyway?';
   rsSaveSettingsFailed = 'The settings could not be saved.';
+  // Under the warning's countdown
+  rsEndedDuringSleep = 'The time passed while the computer was asleep.';
   // Application title, action, remaining time
   rsTrayHintRunning = '%s - %s after %s';
 
@@ -538,7 +541,7 @@ end;
 { WarnSeconds before the end, unless the warning is turned off in the
   options or the countdown is no longer than that. Also on waking, whatever
   the options say, when the end passed while the computer was asleep: the
-  action then runs WakeGraceSeconds later. }
+  action then runs WakeGraceSeconds later, and the warning says why. }
 procedure TfrmMain.CountdownWarn(Sender: TObject);
 begin
   if FWarning = nil then
@@ -548,7 +551,16 @@ begin
     FWarning.OnPostpone := @WarningPostpone;
   end;
   FWarning.ShowWarning(PowerActionNames[FCountdown.Action],
-    FCountdown.RemainingSeconds(Now, GetTickCount64));
+    FCountdown.RemainingSeconds(Now, GetTickCount64), WarningDetail);
+end;
+
+{ The line under the warning's countdown, '' for none. }
+function TfrmMain.WarningDetail: string;
+begin
+  if FCountdown.EndedDuringSleep then
+    Result := rsEndedDuringSleep
+  else
+    Result := '';
 end;
 
 procedure TfrmMain.WarningCancelCountdown(Sender: TObject);
@@ -596,7 +608,8 @@ begin
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionNames[SelectedAction], FormatRemaining(Seconds)]));
   if (FWarning <> nil) and FWarning.Visible then
-    FWarning.ShowWarning(PowerActionNames[FCountdown.Action], Seconds);
+    FWarning.ShowWarning(PowerActionNames[FCountdown.Action], Seconds,
+      WarningDetail);
 end;
 
 { Before Start: when the action would run if started now in Countdown mode,

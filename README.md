@@ -13,7 +13,7 @@ A small Windows tool that shuts down, restarts, signs out, locks, puts to sleep 
 - Up/Down arrow keys change the focused field; Enter starts the countdown and Esc stops it
 - *Start* warns right away when Sleep or Hibernate isn't available on the computer, e.g. when hibernation is turned off, and asks whether to start anyway
 - A minute before the action runs, a warning above all other windows counts down the last seconds, with *Cancel*, which stops the countdown, and *+10 min*, which runs the action 10 minutes later and warns again a minute before; none for a countdown of a minute or less, and it can be turned off in the options
-- When the computer was asleep or hibernating at the time the action was to run, the action doesn't run on waking without notice: the warning announces it, and it runs a minute after waking, also when the warning a minute before is turned off
+- When the computer was asleep or hibernating at the time the action was to run, the action doesn't run on waking without notice: the warning announces it, saying that the time passed while the computer was asleep, and it runs a minute after waking, also when the warning a minute before is turned off
 - Optional minimize to the system tray, with the remaining time in the tray tooltip
 - Options for the default action, the default time delay, remembering the window position, a warning for a zero countdown and the warning a minute before the action, in the Options dialog: *Options* in the status bar opens it (Alt+O), next to *About* (Alt+A), and *OK* applies them and stores them in `HKEY_CURRENT_USER\Software\Power Timer`
 

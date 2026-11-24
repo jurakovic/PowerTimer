@@ -28,6 +28,15 @@ object frmWarning: TfrmWarning
     Font.Style = [fsBold]
     ParentFont = False
   end
+  object lblDetail: TLabel
+    Left = 16
+    Height = 15
+    Top = 45
+    Width = 304
+    AutoSize = False
+    Caption = 'The time passed while the computer was asleep.'
+    Visible = False
+  end
   object btnCancel: TButton
     Left = 164
     Height = 25

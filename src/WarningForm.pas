@@ -2,9 +2,10 @@ unit WarningForm;
 
 { The warning shortly before the action runs: a small window above all
   other windows, also while the main window is in the tray, counting down,
-  with Cancel and +10 min. It may open while the user is typing in another
-  program, so no key presses a button: an empty panel has the focus, and
-  there is no default or cancel button. }
+  with Cancel and +10 min. When the computer slept through the time of the
+  action, a line under the countdown says so. It may open while the user is
+  typing in another program, so no key presses a button: an empty panel has
+  the focus, and there is no default or cancel button. }
 
 {$mode objfpc}{$H+}
 
@@ -20,6 +21,7 @@ type
   TfrmWarning = class(TForm)
     btnCancel: TButton;
     btnPostpone: TButton;
+    lblDetail: TLabel;
     lblMessage: TLabel;
     pnlFocusHolder: TPanel;
     procedure btnCancelClick(Sender: TObject);
@@ -29,9 +31,12 @@ type
   private
     FOnCancelCountdown: TNotifyEvent;
     FOnPostpone: TNotifyEvent;
+    procedure SetDetail(const ADetail: string);
   public
-    { Shows '<action> in <n> seconds', and the window if it is hidden. }
-    procedure ShowWarning(const AActionName: string; ASeconds: Integer);
+    { Shows '<action> in <n> seconds', with ADetail in a line under it, or
+      no such line when ADetail is '', and the window if it is hidden. }
+    procedure ShowWarning(const AActionName: string; ASeconds: Integer;
+      const ADetail: string = '');
     { Fired by Cancel, which stops the countdown. }
     property OnCancelCountdown: TNotifyEvent read FOnCancelCountdown
       write FOnCancelCountdown;
@@ -62,7 +67,8 @@ begin
   btnPostpone.Caption := Format(rsPostpone, [PostponeMinutes]);
 end;
 
-procedure TfrmWarning.ShowWarning(const AActionName: string; ASeconds: Integer);
+procedure TfrmWarning.ShowWarning(const AActionName: string; ASeconds: Integer;
+  const ADetail: string);
 var
   Msg: string;
 begin
@@ -70,6 +76,7 @@ begin
   // Only on change: the countdown timer fires several times per second
   if lblMessage.Caption <> Msg then
     lblMessage.Caption := Msg;
+  SetDetail(ADetail);
   if not Visible then
   begin
     // The empty, zero-size panel holds the focus, so a key typed for
@@ -78,6 +85,27 @@ begin
     ActiveControl := pnlFocusHolder;
     Show;
   end;
+end;
+
+{ The detail line is between the message and the buttons. While it shows,
+  the buttons and the bottom of the window are lower by its height and the
+  space above it. }
+procedure TfrmWarning.SetDetail(const ADetail: string);
+var
+  Shift: Integer;
+begin
+  if lblDetail.Caption <> ADetail then
+    lblDetail.Caption := ADetail;
+  if lblDetail.Visible = (ADetail <> '') then
+    Exit;
+  Shift := lblDetail.Top + lblDetail.Height
+    - (lblMessage.Top + lblMessage.Height);
+  if ADetail = '' then
+    Shift := -Shift;
+  lblDetail.Visible := ADetail <> '';
+  btnCancel.Top := btnCancel.Top + Shift;
+  btnPostpone.Top := btnPostpone.Top + Shift;
+  ClientHeight := ClientHeight + Shift;
 end;
 
 procedure TfrmWarning.btnCancelClick(Sender: TObject);
