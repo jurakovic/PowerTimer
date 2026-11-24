@@ -37,7 +37,9 @@ type
     lblSeconds: TLabel;
     lblStatus: TLabel;
     miClose: TMenuItem;
+    miSeparatorBottom: TMenuItem;
     miShow: TMenuItem;
+    miStop: TMenuItem;
     pmTray: TPopupMenu;
     pnlFocusHolder: TPanel;
     pnlStatus: TPanel;
@@ -60,6 +62,7 @@ type
     procedure lblOptionsClick(Sender: TObject);
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
+    procedure miStopClick(Sender: TObject);
     procedure ModeButtonClick(Sender: TObject);
     procedure TimeFieldExit(Sender: TObject);
     procedure TimeFieldKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -524,6 +527,9 @@ begin
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
+    // The tray menu can stop it
+    miStop.Visible := True;
+    miSeparatorBottom.Visible := True;
     FTotalSeconds := FCountdown.RemainingSeconds(Now, GetTickCount64);
     FProgressSeconds := -1;
     ShowRemaining(Now, GetTickCount64);
@@ -540,6 +546,8 @@ begin
     SetInputsEnabled(True);
     btnStart.Caption := rsStart;
     btnStart.Default := True;
+    miStop.Visible := False;
+    miSeparatorBottom.Visible := False;
     SetTrayHint(AppTitle);
     SetWindowTitle(AppTitle);
     ClearTaskbarProgress(Handle);
@@ -727,6 +735,13 @@ end;
 procedure TfrmMain.miShowClick(Sender: TObject);
 begin
   RestoreFromTray;
+end;
+
+{ As Stop in the window: the window stays in the tray. }
+procedure TfrmMain.miStopClick(Sender: TObject);
+begin
+  if FCountdown.Running then
+    FCountdown.Stop;
 end;
 
 procedure TfrmMain.miCloseClick(Sender: TObject);

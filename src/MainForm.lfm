@@ -316,6 +316,15 @@ object frmMain: TfrmMain
       Default = True
       OnClick = miShowClick
     end
+    object miStop: TMenuItem
+      Caption = 'Stop countdown'
+      Visible = False
+      OnClick = miStopClick
+    end
+    object miSeparatorBottom: TMenuItem
+      Caption = '-'
+      Visible = False
+    end
     object miClose: TMenuItem
       Caption = 'Close'
       OnClick = miCloseClick
