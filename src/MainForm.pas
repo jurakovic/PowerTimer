@@ -123,6 +123,8 @@ resourcestring
     + LineEnding + 'Are you sure you want to continue?';
   rsConfirmZeroTime = 'No time entered, the selected action will be performed immediately.'
     + LineEnding + 'Continue?';
+  // After the reason why the selected action can't run
+  rsStartAnyway = 'Start anyway?';
   rsSaveSettingsFailed = 'The settings could not be saved.';
   // Application title, action, remaining time
   rsTrayHintRunning = '%s - %s after %s';
@@ -447,9 +449,18 @@ procedure TfrmMain.StartCountdown;
 var
   Entered: TTimeParts;
   Mode: TCountdownMode;
+  Reason: string;
 begin
   Entered := ReadTimeFields;
   WriteTimeFields(Entered);
+
+  // Right away rather than when the countdown ends, also before a zero
+  // countdown runs the action. Yes starts anyway, in case the check is
+  // wrong on some computer.
+  Reason := PowerActionUnavailableReason(SelectedAction);
+  if (Reason <> '') and (MessageDlg(rsConfirm, Reason + LineEnding
+    + rsStartAnyway, mtWarning, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
 
   if FClockMode then
     Mode := cmClockTime
