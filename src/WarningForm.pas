@@ -2,10 +2,11 @@ unit WarningForm;
 
 { The warning shortly before the action runs: a small window above all
   other windows, also while the main window is in the tray, counting down,
-  with Cancel and +10 min. When the computer slept through the time of the
-  action, a line under the countdown says so. It may open while the user is
-  typing in another program, so no key presses a button: an empty panel has
-  the focus, and there is no default or cancel button. }
+  with Cancel and +10 min, or the minutes set in the options. When the
+  computer slept through the time of the action, a line under the countdown
+  says so. It may open while the user is typing in another program, so no
+  key presses a button: an empty panel has the focus, and there is no
+  default or cancel button. }
 
 {$mode objfpc}{$H+}
 
@@ -33,6 +34,8 @@ type
     FOnPostpone: TNotifyEvent;
     procedure SetDetail(const ADetail: string);
   public
+    { The minutes +10 min adds, for its caption: '+15 min' for 15. }
+    procedure SetPostponeMinutes(AMinutes: Integer);
     { Shows '<action> in <n> seconds', with ADetail in a line under it, or
       no such line when ADetail is '', and the window if it is hidden. }
     procedure ShowWarning(const AActionName: string; ASeconds: Integer;
@@ -40,7 +43,8 @@ type
     { Fired by Cancel, which stops the countdown. }
     property OnCancelCountdown: TNotifyEvent read FOnCancelCountdown
       write FOnCancelCountdown;
-    { Fired by +10 min, which moves the action PostponeMinutes later. }
+    { Fired by +10 min, which is to move the action the minutes given to
+      SetPostponeMinutes later. }
     property OnPostpone: TNotifyEvent read FOnPostpone write FOnPostpone;
   end;
 
@@ -64,7 +68,12 @@ begin
   // The title and the texts in the form file are only what the designer
   // shows
   Caption := AppTitle;
-  btnPostpone.Caption := Format(rsPostpone, [PostponeMinutes]);
+  SetPostponeMinutes(DefaultAddMinutes);
+end;
+
+procedure TfrmWarning.SetPostponeMinutes(AMinutes: Integer);
+begin
+  btnPostpone.Caption := Format(rsPostpone, [AMinutes]);
 end;
 
 procedure TfrmWarning.ShowWarning(const AActionName: string; ASeconds: Integer;

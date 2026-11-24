@@ -29,10 +29,14 @@ const
   // The most the two-digit time fields can show: 99:59:59
   MaxFieldSeconds = 99 * SecondsPerHour + 59 * SecondsPerMinute + 59;
 
-  // How long before the action the warning appears, and how much later
-  // its +10 min moves the action
+  // How long before the action the warning appears
   WarnSeconds = 60;
-  PostponeMinutes = 10;
+
+  // How many minutes adding time to a running countdown adds, as set in
+  // the options, e.g. with the warning's +10 min
+  MinAddMinutes = 1;
+  MaxAddMinutes = 120;
+  DefaultAddMinutes = 10;
 
 type
   TTimeParts = record
@@ -77,6 +81,8 @@ function SecondsUntil(ANow, ATarget: TDateTime): Integer;
 function RemainingSeconds(ANowTicks, ADeadlineTicks: QWord): Integer;
 
 function ClampDelayHours(AValue: Integer): Integer;
+
+function ClampAddMinutes(AValue: Integer): Integer;
 
 { The default delay with its unit, e.g. '1 h'. }
 function FormatDelayHours(AHours: Integer): string;
@@ -228,6 +234,11 @@ end;
 function ClampDelayHours(AValue: Integer): Integer;
 begin
   Result := Clamp(AValue, MinDelayHours, MaxDelayHours);
+end;
+
+function ClampAddMinutes(AValue: Integer): Integer;
+begin
+  Result := Clamp(AValue, MinAddMinutes, MaxAddMinutes);
 end;
 
 function FormatDelayHours(AHours: Integer): string;

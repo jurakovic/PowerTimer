@@ -111,6 +111,7 @@ type
     procedure WarningCancelCountdown(Sender: TObject);
     procedure WarningPostpone(Sender: TObject);
     procedure PostponeCountdown(ASeconds: Integer);
+    procedure UpdateAddTimeCaptions;
     procedure ShowRemaining(ANow: TDateTime; ATicks: QWord);
     procedure UpdateIdleStatus;
     procedure SetStatusText(const AText: string);
@@ -247,6 +248,7 @@ begin
   FSettings := Edited;
   if DelayChanged then
     ResetTimeFields;
+  UpdateAddTimeCaptions;
   // Saved right away, so the change doesn't depend on the window being
   // closed normally. The user has just changed something, so a failure is
   // reported here; elsewhere saving stays silent.
@@ -581,6 +583,7 @@ begin
     FWarning := TfrmWarning.Create(Self);
     FWarning.OnCancelCountdown := @WarningCancelCountdown;
     FWarning.OnPostpone := @WarningPostpone;
+    UpdateAddTimeCaptions;
   end;
   FWarning.ShowWarning(PowerActionName(FCountdown.Action),
     FCountdown.RemainingSeconds(Now, GetTickCount64), WarningDetail);
@@ -602,7 +605,15 @@ end;
 
 procedure TfrmMain.WarningPostpone(Sender: TObject);
 begin
-  PostponeCountdown(PostponeMinutes * SecondsPerMinute);
+  PostponeCountdown(FSettings.AddMinutes * SecondsPerMinute);
+end;
+
+{ The captions that name how much time adding time adds, as set in the
+  options. }
+procedure TfrmMain.UpdateAddTimeCaptions;
+begin
+  if FWarning <> nil then
+    FWarning.SetPostponeMinutes(FSettings.AddMinutes);
 end;
 
 { The warning comes back WarnSeconds before the new end. }

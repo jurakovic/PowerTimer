@@ -28,6 +28,7 @@ type
     procedure SecondsUntil_RoundsUp;
     procedure RemainingSeconds_RoundsUp;
     procedure ClampDelayHours_Limits;
+    procedure ClampAddMinutes_Limits;
     procedure FormatDelayHours_ShowsTheUnit;
     procedure DefaultCountdown_UsesDelay;
     procedure DefaultClockTime_AddsDelay;
@@ -187,6 +188,14 @@ begin
   AssertEquals(5, ClampDelayHours(5));
   AssertEquals(24, ClampDelayHours(24));
   AssertEquals(24, ClampDelayHours(100));
+end;
+
+procedure TTimerLogicTests.ClampAddMinutes_Limits;
+begin
+  AssertEquals(1, ClampAddMinutes(0));
+  AssertEquals(1, ClampAddMinutes(1));
+  AssertEquals(120, ClampAddMinutes(120));
+  AssertEquals(120, ClampAddMinutes(500));
 end;
 
 procedure TTimerLogicTests.FormatDelayHours_ShowsTheUnit;

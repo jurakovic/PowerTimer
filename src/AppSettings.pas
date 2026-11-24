@@ -23,6 +23,8 @@ type
     MinimizeToTray: Boolean;
     DefaultAction: TPowerAction;
     DefaultDelayHours: Integer;
+    // How many minutes adding time adds
+    AddMinutes: Integer;
     HasWindowPos: Boolean;
     WindowLeft: Integer;
     WindowTop: Integer;
@@ -55,6 +57,7 @@ const
   ValMinimizeToTray = 'minimizeToTray';
   ValDefaultAction = 'defaultAction';
   ValDefaultTimeDelay = 'defaultTimeDelay';
+  ValAddMinutes = 'addMinutes';
 
 function DefaultSettings: TAppSettings;
 begin
@@ -66,6 +69,7 @@ begin
   Result.MinimizeToTray := False;
   Result.DefaultAction := DefaultPowerAction;
   Result.DefaultDelayHours := MinDelayHours;
+  Result.AddMinutes := DefaultAddMinutes;
   Result.HasWindowPos := False;
   Result.WindowLeft := 0;
   Result.WindowTop := 0;
@@ -74,6 +78,7 @@ end;
 procedure NormalizeSettings(var ASettings: TAppSettings);
 begin
   ASettings.DefaultDelayHours := ClampDelayHours(ASettings.DefaultDelayHours);
+  ASettings.AddMinutes := ClampAddMinutes(ASettings.AddMinutes);
   ASettings.DefaultAction := PowerActionFromIndex(Ord(ASettings.DefaultAction));
 end;
 
@@ -125,6 +130,7 @@ begin
         ReadInt(Reg, ValDefaultAction, Ord(Result.DefaultAction)));
       Result.DefaultDelayHours :=
         ReadInt(Reg, ValDefaultTimeDelay, Result.DefaultDelayHours);
+      Result.AddMinutes := ReadInt(Reg, ValAddMinutes, Result.AddMinutes);
       Result.WindowLeft := ReadInt(Reg, ValPositionX, 0, HasX);
       Result.WindowTop := ReadInt(Reg, ValPositionY, 0, HasY);
       Result.HasWindowPos := HasX and HasY;
@@ -158,6 +164,7 @@ begin
       Reg.WriteInteger(ValMinimizeToTray, Ord(S.MinimizeToTray));
       Reg.WriteInteger(ValDefaultAction, Ord(S.DefaultAction));
       Reg.WriteInteger(ValDefaultTimeDelay, S.DefaultDelayHours);
+      Reg.WriteInteger(ValAddMinutes, S.AddMinutes);
       if S.HasWindowPos then
       begin
         Reg.WriteInteger(ValPositionX, S.WindowLeft);

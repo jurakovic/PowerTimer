@@ -8,7 +8,7 @@ unit OptionsForm;
 interface
 
 uses
-  Classes, Forms, Controls, StdCtrls, ExtCtrls, AppSettings;
+  Classes, Forms, Controls, StdCtrls, ExtCtrls, Spin, AppSettings;
 
 type
 
@@ -27,11 +27,14 @@ type
     cbWarnBeforeAction: TCheckBox;
     cbWarnZeroTime: TCheckBox;
     edtDefaultDelay: TEdit;
+    lblAddMinutes: TLabel;
+    lblAddMinutesUnit: TLabel;
     lblBehaviour: TLabel;
     lblDefaultAction: TLabel;
     lblDefaultDelay: TLabel;
     lblForceActionsNote: TLabel;
     lblOnStartup: TLabel;
+    seAddMinutes: TSpinEdit;
     procedure btnDelayMinusClick(Sender: TObject);
     procedure btnDelayPlusClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -87,6 +90,7 @@ begin
   cbWarnZeroTime.Checked := ASettings.WarnZeroTime;
   cbWarnBeforeAction.Checked := ASettings.WarnBeforeAction;
   cbForceActions.Checked := ASettings.ForceActions;
+  seAddMinutes.Value := ClampAddMinutes(ASettings.AddMinutes);
 end;
 
 procedure TfrmOptions.WriteSettings(var ASettings: TAppSettings);
@@ -98,6 +102,7 @@ begin
   ASettings.WarnZeroTime := cbWarnZeroTime.Checked;
   ASettings.WarnBeforeAction := cbWarnBeforeAction.Checked;
   ASettings.ForceActions := cbForceActions.Checked;
+  ASettings.AddMinutes := ClampAddMinutes(seAddMinutes.Value);
 end;
 
 procedure TfrmOptions.SetDelayHours(AHours: Integer);

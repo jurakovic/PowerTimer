@@ -23,6 +23,7 @@ type
   published
     procedure Defaults;
     procedure Normalize_ClampsDelay;
+    procedure Normalize_ClampsAddMinutes;
     procedure Load_MissingKeyGivesDefaults;
     procedure SaveAndLoad_RoundTrips;
     procedure Load_InvalidValuesFallBack;
@@ -82,6 +83,7 @@ begin
   AssertFalse(S.MinimizeToTray);
   AssertTrue(S.DefaultAction = paShutdown);
   AssertEquals(1, S.DefaultDelayHours);
+  AssertEquals(10, S.AddMinutes);
   AssertFalse(S.HasWindowPos);
 end;
 
@@ -98,6 +100,19 @@ begin
   AssertEquals(24, S.DefaultDelayHours);
 end;
 
+procedure TAppSettingsTests.Normalize_ClampsAddMinutes;
+var
+  S: TAppSettings;
+begin
+  S := DefaultSettings;
+  S.AddMinutes := 0;
+  NormalizeSettings(S);
+  AssertEquals(1, S.AddMinutes);
+  S.AddMinutes := 500;
+  NormalizeSettings(S);
+  AssertEquals(120, S.AddMinutes);
+end;
+
 procedure TAppSettingsTests.Load_MissingKeyGivesDefaults;
 var
   S, D: TAppSettings;
@@ -111,6 +126,7 @@ begin
   AssertEquals(D.MinimizeToTray, S.MinimizeToTray);
   AssertTrue(D.DefaultAction = S.DefaultAction);
   AssertEquals(D.DefaultDelayHours, S.DefaultDelayHours);
+  AssertEquals(D.AddMinutes, S.AddMinutes);
   AssertFalse(S.HasWindowPos);
 end;
 
@@ -127,6 +143,7 @@ begin
   S.MinimizeToTray := True;
   S.DefaultAction := paHibernate;
   S.DefaultDelayHours := 7;
+  S.AddMinutes := 15;
   S.HasWindowPos := True;
   S.WindowLeft := -1200;
   S.WindowTop := 345;
@@ -140,6 +157,7 @@ begin
   AssertTrue(L.MinimizeToTray);
   AssertTrue(L.DefaultAction = paHibernate);
   AssertEquals(7, L.DefaultDelayHours);
+  AssertEquals(15, L.AddMinutes);
   AssertTrue(L.HasWindowPos);
   AssertEquals(-1200, L.WindowLeft);
   AssertEquals(345, L.WindowTop);
@@ -151,9 +169,11 @@ var
 begin
   WriteRawInteger('defaultAction', 42);
   WriteRawInteger('defaultTimeDelay', 0);
+  WriteRawInteger('addMinutes', 500);
   S := LoadSettings(TestKey);
   AssertTrue(S.DefaultAction = paShutdown);
   AssertEquals(1, S.DefaultDelayHours);
+  AssertEquals(120, S.AddMinutes);
 end;
 
 procedure TAppSettingsTests.Load_PositionNeedsBothCoordinates;
