@@ -74,6 +74,11 @@ type
     FCountdown: TCountdown;
     // Created when the countdown first warns
     FWarning: TfrmWarning;
+    { The countdown's length for the progress on the taskbar button: the
+      seconds left when it started, plus the time added since. }
+    FTotalSeconds: Integer;
+    // The seconds left that the progress shows, -1 for none yet
+    FProgressSeconds: Integer;
     { The settings as loaded, or as last changed in the Options dialog.
       CurrentSettings adds the current window position. }
     FSettings: TAppSettings;
@@ -113,7 +118,7 @@ var
 implementation
 
 uses
-  AppInfo, AboutForm, OptionsForm, TimeFields;
+  AppInfo, AboutForm, OptionsForm, TimeFields, TaskbarProgress;
 
 {$R *.lfm}
 
@@ -519,6 +524,8 @@ begin
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
+    FTotalSeconds := FCountdown.RemainingSeconds(Now, GetTickCount64);
+    FProgressSeconds := -1;
     ShowRemaining(Now, GetTickCount64);
     tmrCountdown.Enabled := True;
   end
@@ -535,6 +542,7 @@ begin
     btnStart.Default := True;
     SetTrayHint(AppTitle);
     SetWindowTitle(AppTitle);
+    ClearTaskbarProgress(Handle);
     UpdateIdleStatus;
     tmrStatus.Enabled := True;
   end;
@@ -579,6 +587,7 @@ end;
 procedure TfrmMain.PostponeCountdown(ASeconds: Integer);
 begin
   FCountdown.Postpone(ASeconds);
+  Inc(FTotalSeconds, ASeconds);
   if FWarning <> nil then
     FWarning.Hide;
   ShowRemaining(Now, GetTickCount64);
@@ -612,6 +621,16 @@ begin
     Seconds));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionName(SelectedAction), FormatRemaining(Seconds)]));
+  // With every change, since Windows drops it when the taskbar button is
+  // created again, e.g. after the window comes back from the tray
+  if Seconds <> FProgressSeconds then
+  begin
+    FProgressSeconds := Seconds;
+    if Seconds < FTotalSeconds then
+      SetTaskbarProgress(Handle, FTotalSeconds - Seconds, FTotalSeconds)
+    else
+      SetTaskbarProgress(Handle, 0, FTotalSeconds);
+  end;
   if (FWarning <> nil) and FWarning.Visible then
     FWarning.ShowWarning(PowerActionName(FCountdown.Action), Seconds,
       WarningDetail);

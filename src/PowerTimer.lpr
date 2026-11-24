@@ -21,6 +21,7 @@ uses
   TimerLogic,
   TimeFields,
   Countdown,
+  TaskbarProgress,
   PowerActions,
   AppSettings;
 

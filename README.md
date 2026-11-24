@@ -10,7 +10,7 @@ A small Windows tool that shuts down, restarts, signs out, locks, puts to sleep 
 - **Countdown** – run the action after the entered hours, minutes and seconds
 - **At time** – run the action when the clock shows the entered time (tomorrow if that time has already passed today), also if the clock is changed meanwhile, e.g. to or from daylight saving time
 - The status bar shows when the action will run: in *Countdown* mode if started now, in *At time* mode with *tomorrow* if the entered time has already passed today, and while it waits the end time and the time left; *At time* mode keeps showing the time the action runs at in the fields: the entered time, or later after *+10 min* or after sleep
-- While the countdown runs, the window title shows the time left first, e.g. *01:12:30 - Shut down - Power Timer*, so the taskbar button and Alt+Tab show it too, also when the window isn't minimized to the tray
+- While the countdown runs, the window title shows the time left first, e.g. *01:12:30 - Shut down - Power Timer*, so the taskbar button and Alt+Tab show it too, also when the window isn't minimized to the tray; the taskbar button also fills up with a green bar as the time passes
 - Up/Down arrow keys change the focused field; Enter starts the countdown and Esc stops it
 - *Start* warns right away when Sleep or Hibernate isn't available on the computer, e.g. when hibernation is turned off, and asks whether to start anyway
 - A minute before the action runs, a warning above all other windows counts down the last seconds, with *Cancel*, which stops the countdown, and *+10 min*, which runs the action 10 minutes later and warns again a minute before; none for a countdown of a minute or less, and it can be turned off in the options
