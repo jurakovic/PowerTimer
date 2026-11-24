@@ -10,7 +10,7 @@ uses
   // After StdCtrls: the labels underline their access keys only while Alt
   // is held
   AccessKeyLabel,
-  TimerLogic, PowerActions, AppSettings, Countdown;
+  TimerLogic, PowerActions, AppSettings, Countdown, WarningForm;
 
 type
 
@@ -72,6 +72,8 @@ type
   private
     FClockMode: Boolean;
     FCountdown: TCountdown;
+    // Created when the countdown first warns
+    FWarning: TfrmWarning;
     { The settings as loaded, or as last changed in the Options dialog.
       CurrentSettings adds the current window position. }
     FSettings: TAppSettings;
@@ -90,6 +92,10 @@ type
     procedure SetInputsEnabled(AEnabled: Boolean);
     procedure StartCountdown;
     procedure CountdownChange(Sender: TObject);
+    procedure CountdownWarn(Sender: TObject);
+    procedure WarningCancelCountdown(Sender: TObject);
+    procedure WarningPostpone(Sender: TObject);
+    procedure PostponeCountdown(ASeconds: Integer);
     procedure ShowRemaining(ANow: TDateTime; ATicks: QWord);
     procedure UpdateIdleStatus;
     procedure SetStatusText(const AText: string);
@@ -135,6 +141,7 @@ begin
   FCountdown := TCountdown.Create;
   FCountdown.OnChange := @CountdownChange;
   FCountdown.OnRunAction := @RunAction;
+  FCountdown.OnWarn := @CountdownWarn;
   Application.AddOnEndSessionHandler(@AppEndSession);
   // Without an active control the form would focus the hour field. The
   // empty, zero-size panel holds the focus instead, so nothing looks
@@ -448,6 +455,10 @@ begin
     Mode := cmClockTime
   else
     Mode := cmCountdown;
+  if FSettings.WarnBeforeAction then
+    FCountdown.WarnSeconds := WarnSeconds
+  else
+    FCountdown.WarnSeconds := 0;
   if FCountdown.Start(Mode, Entered, SelectedAction, Now, GetTickCount64) then
     Exit;
 
@@ -476,6 +487,9 @@ begin
   else
   begin
     tmrCountdown.Enabled := False;
+    // However the countdown ended: stopped, cancelled or run
+    if FWarning <> nil then
+      FWarning.Hide;
     // Show what was entered again, not the time left in Countdown mode
     WriteTimeFields(FCountdown.Entered);
     SetInputsEnabled(True);
@@ -485,6 +499,39 @@ begin
     UpdateIdleStatus;
     tmrStatus.Enabled := True;
   end;
+end;
+
+{ WarnSeconds before the end, unless the warning is turned off in the
+  options or the countdown is no longer than that. }
+procedure TfrmMain.CountdownWarn(Sender: TObject);
+begin
+  if FWarning = nil then
+  begin
+    FWarning := TfrmWarning.Create(Self);
+    FWarning.OnCancelCountdown := @WarningCancelCountdown;
+    FWarning.OnPostpone := @WarningPostpone;
+  end;
+  FWarning.ShowWarning(PowerActionNames[FCountdown.Action],
+    FCountdown.RemainingSeconds(Now, GetTickCount64));
+end;
+
+procedure TfrmMain.WarningCancelCountdown(Sender: TObject);
+begin
+  FCountdown.Stop;
+end;
+
+procedure TfrmMain.WarningPostpone(Sender: TObject);
+begin
+  PostponeCountdown(PostponeMinutes * SecondsPerMinute);
+end;
+
+{ The warning comes back WarnSeconds before the new end. }
+procedure TfrmMain.PostponeCountdown(ASeconds: Integer);
+begin
+  FCountdown.Postpone(ASeconds);
+  if FWarning <> nil then
+    FWarning.Hide;
+  ShowRemaining(Now, GetTickCount64);
 end;
 
 { Countdown mode counts down in the time fields. At time mode keeps showing
@@ -512,6 +559,8 @@ begin
     DefaultFormatSettings));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionNames[SelectedAction], FormatRemaining(Seconds)]));
+  if (FWarning <> nil) and FWarning.Visible then
+    FWarning.ShowWarning(PowerActionNames[FCountdown.Action], Seconds);
 end;
 
 { Before Start: when the action would run if started now in Countdown mode,

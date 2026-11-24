@@ -11,8 +11,9 @@ A small Windows tool that shuts down, restarts, signs out, locks, puts to sleep 
 - **At time** – run the action when the clock shows the entered time (tomorrow if that time has already passed today), also if the clock is changed meanwhile, e.g. to or from daylight saving time
 - The status bar shows when the action will run: in *Countdown* mode if started now, in *At time* mode with *tomorrow* if the entered time has already passed today, and while it waits the end time and the time left; *At time* mode keeps showing the entered time in the fields
 - Up/Down arrow keys change the focused field; Enter starts the countdown and Esc stops it
+- A minute before the action runs, a warning above all other windows counts down the last seconds, with *Cancel*, which stops the countdown, and *+10 min*, which runs the action 10 minutes later and warns again a minute before; none for a countdown of a minute or less, and it can be turned off in the options
 - Optional minimize to the system tray, with the remaining time in the tray tooltip
-- Options for the default action, the default time delay, remembering the window position and a warning for a zero countdown, in the Options dialog: *Options* in the status bar opens it (Alt+O), next to *About* (Alt+A), and *OK* applies them and stores them in `HKEY_CURRENT_USER\Software\Power Timer`
+- Options for the default action, the default time delay, remembering the window position, a warning for a zero countdown and the warning a minute before the action, in the Options dialog: *Options* in the status bar opens it (Alt+O), next to *About* (Alt+A), and *OK* applies them and stores them in `HKEY_CURRENT_USER\Software\Power Timer`
 
 ### Download
 
