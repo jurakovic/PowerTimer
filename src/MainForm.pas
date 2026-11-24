@@ -383,6 +383,9 @@ procedure TfrmMain.TimeFieldExit(Sender: TObject);
 var
   Edit: TEdit;
 begin
+  // While running, the field shows the time left or the end time
+  if FCountdown.Running then
+    Exit;
   Edit := Sender as TEdit;
   Edit.Text := FormatTimeField(ParseTimeField(Edit.Text, FieldMax(Edit)));
 end;
@@ -393,6 +396,10 @@ var
   Edit: TEdit;
   Delta: Integer;
 begin
+  // The fields are read-only while running, but this sets their text
+  // itself
+  if FCountdown.Running then
+    Exit;
   case Key of
     VK_UP: Delta := 1;
     VK_DOWN: Delta := -1;
@@ -410,6 +417,11 @@ procedure TfrmMain.TimeFieldKeyPress(Sender: TObject; var Key: Char);
 var
   Edit: TEdit;
 begin
+  if FCountdown.Running then
+  begin
+    Key := #0;
+    Exit;
+  end;
   Edit := Sender as TEdit;
   if Key in ['0'..'9'] then
   begin
@@ -430,13 +442,19 @@ begin
     StartCountdown;
 end;
 
+{ The time fields become read-only rather than disabled, which Windows
+  would draw greyed out, so the time stays readable while it counts down.
+  They also leave the tab order. }
 procedure TfrmMain.SetInputsEnabled(AEnabled: Boolean);
 begin
   btnCountdown.Enabled := AEnabled;
   btnSetTime.Enabled := AEnabled;
-  edtHour.Enabled := AEnabled;
-  edtMinute.Enabled := AEnabled;
-  edtSecond.Enabled := AEnabled;
+  edtHour.ReadOnly := not AEnabled;
+  edtHour.TabStop := AEnabled;
+  edtMinute.ReadOnly := not AEnabled;
+  edtMinute.TabStop := AEnabled;
+  edtSecond.ReadOnly := not AEnabled;
+  edtSecond.TabStop := AEnabled;
   cbAction.Enabled := AEnabled;
   actOptions.Enabled := AEnabled;
   actAbout.Enabled := AEnabled;
@@ -489,6 +507,11 @@ begin
     // While running, the countdown timer updates the status text
     tmrStatus.Enabled := False;
     SetInputsEnabled(False);
+    // A read-only field keeps the focus, and its text would stay selected
+    // while it counts down. The window may be hidden in the tray.
+    if ((ActiveControl = edtHour) or (ActiveControl = edtMinute)
+      or (ActiveControl = edtSecond)) and btnStart.CanFocus then
+      ActiveControl := btnStart;
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
