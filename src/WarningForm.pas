@@ -67,12 +67,12 @@ end;
 
 procedure TfrmWarning.ShowWarning(const AActionName: string; ASeconds: Integer);
 var
-  Text: string;
+  Msg: string;
 begin
-  Text := Format(rsWarningMessage, [AActionName, FormatSecondsLeft(ASeconds)]);
+  Msg := Format(rsWarningMessage, [AActionName, FormatSecondsLeft(ASeconds)]);
   // Only on change: the countdown timer fires several times per second
-  if lblMessage.Caption <> Text then
-    lblMessage.Caption := Text;
+  if lblMessage.Caption <> Msg then
+    lblMessage.Caption := Msg;
   if not Visible then
     Show;
 end;
