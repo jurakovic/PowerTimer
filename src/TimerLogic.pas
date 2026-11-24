@@ -1,7 +1,7 @@
 unit TimerLogic;
 
 { Pure time calculations: the time arithmetic, the default delay and the
-  texts of the status bar. The input rules of the time fields are in
+  texts of the status bar and the warning. The input rules of the time fields are in
   TimeFields. Has no UI or OS dependencies so it can be unit tested on any
   platform. }
 
@@ -28,6 +28,11 @@ const
 
   // The most the two-digit time fields can show: 99:59:59
   MaxFieldSeconds = 99 * SecondsPerHour + 59 * SecondsPerMinute + 59;
+
+  // How long before the action the warning appears, and how much later
+  // its +10 min moves the action
+  WarnSeconds = 60;
+  PostponeMinutes = 10;
 
 type
   TTimeParts = record
@@ -86,6 +91,9 @@ function DefaultClockTime(ANow: TDateTime; ADelayHours: Integer): TTimeParts;
 { Human readable duration, e.g. '01 h 05 m 00 s'. }
 function FormatRemaining(ATotalSeconds: Integer): string;
 
+{ The seconds left in the warning: '1 second' or e.g. '42 seconds'. }
+function FormatSecondsLeft(ASeconds: Integer): string;
+
 { A duration as hours, minutes and seconds, e.g. '01:12:30'. Negative
   durations are treated as zero, and the hours can go over 23
   ('24:00:00'). }
@@ -123,6 +131,9 @@ resourcestring
   rsRemainingFormat = '%.2d h %.2d m %.2d s';
   // Hours
   rsDelayHoursFormat = '%d h';
+  rsOneSecond = '1 second';
+  // Seconds, more than one
+  rsSecondsFormat = '%d seconds';
   // Time
   rsEndToday = 'at %s';
   // Time
@@ -240,6 +251,14 @@ var
 begin
   P := SecondsToTimeParts(ATotalSeconds);
   Result := Format(rsRemainingFormat, [P.Hours, P.Minutes, P.Seconds]);
+end;
+
+function FormatSecondsLeft(ASeconds: Integer): string;
+begin
+  if ASeconds = 1 then
+    Result := rsOneSecond
+  else
+    Result := Format(rsSecondsFormat, [ASeconds]);
 end;
 
 function FormatDuration(ATotalSeconds: Integer): string;

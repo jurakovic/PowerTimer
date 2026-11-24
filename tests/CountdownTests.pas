@@ -3,7 +3,8 @@ unit CountdownTests;
 { Drives TCountdown with its own times and tick counts. The events are
   recorded in a log, so their order is checked too: 'change:1;' for
   OnChange while running and 'change:0;' when not, since the main form's
-  handler reads Running, and 'run:<ordinal>;' for OnRunAction. }
+  handler reads Running, 'run:<ordinal>;' for OnRunAction and 'warn;' for
+  OnWarn. }
 
 {$mode objfpc}{$H+}
 
@@ -23,6 +24,7 @@ type
     procedure CheckDateTime(const AMessage: string; AExpected, AActual: TDateTime);
     procedure CountdownChange(Sender: TObject);
     procedure CountdownRunAction(AAction: TPowerAction);
+    procedure CountdownWarn(Sender: TObject);
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -43,6 +45,15 @@ type
     procedure EndTime_CountdownIsStartPlusTheDuration;
     procedure EndTime_CountdownFollowsAClockChange;
     procedure EndTime_ClockTimeIsTheTarget;
+    procedure Warn_OnceAtWarnSecondsLeft;
+    procedure Warn_NotForACountdownOfWarnSecondsOrLess;
+    procedure Warn_NeverWithZeroWarnSeconds;
+    procedure Warn_ClockTime;
+    procedure Postpone_CountdownMovesTheEndAndWarnsAgain;
+    procedure Postpone_ClockTimeMovesTheTargetAndWarnsAgain;
+    procedure Postpone_KeepsTheEnteredTime;
+    procedure Postpone_WhenIdleDoesNothing;
+    procedure Start_AfterAWarningWarnsAgain;
   end;
 
 implementation
@@ -56,6 +67,12 @@ end;
 procedure TCountdownTests.CountdownRunAction(AAction: TPowerAction);
 begin
   FLog := FLog + Format('run:%d;', [Ord(AAction)]);
+end;
+
+procedure TCountdownTests.CountdownWarn(Sender: TObject);
+begin
+  AssertTrue('sender', Sender = FCountdown);
+  FLog := FLog + 'warn;';
 end;
 
 procedure TCountdownTests.CheckDateTime(const AMessage: string; AExpected,
@@ -72,6 +89,7 @@ begin
   FCountdown := TCountdown.Create;
   FCountdown.OnChange := @CountdownChange;
   FCountdown.OnRunAction := @CountdownRunAction;
+  FCountdown.OnWarn := @CountdownWarn;
   FLog := '';
   FNow := EncodeDateTime(2024, 3, 1, 12, 0, 0, 0);
 end;
@@ -242,6 +260,127 @@ begin
     FCountdown.EndTime(FNow, 5000));
   CheckDateTime('an hour on', EncodeDateTime(2024, 3, 2, 1, 0, 0, 0),
     FCountdown.EndTime(IncHour(FNow), 5000 + SecondsPerHour * MSecsPerSecond));
+end;
+
+procedure TCountdownTests.Warn_OnceAtWarnSecondsLeft;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(FNow, 60000);
+  AssertEquals('61 s left', 'change:1;', FLog);
+  FCountdown.Tick(FNow, 61000);
+  AssertEquals('60 s left', 'change:1;warn;', FLog);
+  FCountdown.Tick(FNow, 62000);
+  AssertEquals('59 s left', 'change:1;warn;', FLog);
+  FCountdown.Tick(FNow, 121000);
+  AssertEquals('at the end', 'change:1;warn;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Warn_NotForACountdownOfWarnSecondsOrLess;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 1, 0), paLock, FNow, 1000);
+  FCountdown.Tick(FNow, 1000);
+  FCountdown.Tick(FNow, 30000);
+  FCountdown.Tick(FNow, 61000);
+  AssertEquals('60 s', 'change:1;change:0;run:3;', FLog);
+
+  FLog := '';
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 1, 1), paLock, FNow, 1000);
+  FCountdown.Tick(FNow, 1000);
+  AssertEquals('61 s, at the start', 'change:1;', FLog);
+  FCountdown.Tick(FNow, 2000);
+  AssertEquals('61 s, at 60 s left', 'change:1;warn;', FLog);
+end;
+
+procedure TCountdownTests.Warn_NeverWithZeroWarnSeconds;
+begin
+  FCountdown.WarnSeconds := 0;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(FNow, 61000);
+  FCountdown.Tick(FNow, 120000);
+  FCountdown.Tick(FNow, 121000);
+  AssertEquals('log', 'change:1;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Warn_ClockTime;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmClockTime, MakeTimeParts(12, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(IncSecond(FNow, 59), 2000);
+  AssertEquals('61 s left', 'change:1;', FLog);
+  FCountdown.Tick(IncSecond(FNow, 60), 3000);
+  AssertEquals('60 s left', 'change:1;warn;', FLog);
+end;
+
+procedure TCountdownTests.Postpone_CountdownMovesTheEndAndWarnsAgain;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(IncSecond(FNow, 60), 61000);
+  AssertEquals('warned', 'change:1;warn;', FLog);
+  FCountdown.Postpone(10 * SecondsPerMinute);
+  AssertTrue('running', FCountdown.Running);
+  AssertEquals('remaining', 60 + 10 * SecondsPerMinute,
+    FCountdown.RemainingSeconds(IncSecond(FNow, 60), 61000));
+  CheckDateTime('end', IncSecond(FNow, 120 + 10 * SecondsPerMinute),
+    FCountdown.EndTime(IncSecond(FNow, 60), 61000));
+  FCountdown.Tick(IncSecond(FNow, 120), 121000);
+  AssertEquals('at the old end', 'change:1;warn;', FLog);
+  FCountdown.Tick(IncSecond(FNow, 660), 661000);
+  AssertEquals('60 s before the new end', 'change:1;warn;warn;', FLog);
+  FCountdown.Tick(IncSecond(FNow, 720), 721000);
+  AssertEquals('at the new end', 'change:1;warn;warn;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Postpone_ClockTimeMovesTheTargetAndWarnsAgain;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmClockTime, MakeTimeParts(12, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(IncSecond(FNow, 60), 2000);
+  AssertEquals('warned', 'change:1;warn;', FLog);
+  FCountdown.Postpone(10 * SecondsPerMinute);
+  AssertEquals('remaining', 60 + 10 * SecondsPerMinute,
+    FCountdown.RemainingSeconds(IncSecond(FNow, 60), 2000));
+  CheckDateTime('end', EncodeDateTime(2024, 3, 1, 12, 12, 0, 0),
+    FCountdown.EndTime(IncSecond(FNow, 60), 2000));
+  FCountdown.Tick(EncodeDateTime(2024, 3, 1, 12, 2, 0, 0), 3000);
+  AssertEquals('at the old end', 'change:1;warn;', FLog);
+  FCountdown.Tick(EncodeDateTime(2024, 3, 1, 12, 11, 0, 0), 4000);
+  AssertEquals('60 s before the new end', 'change:1;warn;warn;', FLog);
+  FCountdown.Tick(EncodeDateTime(2024, 3, 1, 12, 12, 0, 0), 5000);
+  AssertEquals('at the new end', 'change:1;warn;warn;change:0;run:3;', FLog);
+end;
+
+procedure TCountdownTests.Postpone_KeepsTheEnteredTime;
+var
+  Entered: TTimeParts;
+begin
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 1000);
+  FCountdown.Postpone(10 * SecondsPerMinute);
+  Entered := FCountdown.Entered;
+  AssertEquals('minutes', 2, Entered.Minutes);
+  AssertEquals('seconds', 0, Entered.Seconds);
+  AssertEquals('log', 'change:1;', FLog);
+end;
+
+procedure TCountdownTests.Postpone_WhenIdleDoesNothing;
+begin
+  FCountdown.Postpone(10 * SecondsPerMinute);
+  AssertFalse('running', FCountdown.Running);
+  AssertEquals('remaining', 0, FCountdown.RemainingSeconds(FNow, 1000));
+  AssertEquals('log', '', FLog);
+end;
+
+procedure TCountdownTests.Start_AfterAWarningWarnsAgain;
+begin
+  FCountdown.WarnSeconds := 60;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 1000);
+  FCountdown.Tick(FNow, 61000);
+  FCountdown.Stop;
+  FCountdown.Start(cmCountdown, MakeTimeParts(0, 2, 0), paLock, FNow, 100000);
+  FCountdown.Tick(FNow, 160000);
+  AssertEquals('log', 'change:1;warn;change:0;change:1;warn;', FLog);
 end;
 
 initialization

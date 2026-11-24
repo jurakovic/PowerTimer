@@ -32,8 +32,11 @@ type
     FDeadline: QWord; // Countdown mode, in ticks
     FTarget: TDateTime; // ClockTime mode, local time
     FEndTime: TDateTime; // Countdown mode, local time, see EndTime
+    FWarnSeconds: Integer;
+    FWarned: Boolean; // OnWarn was fired, or won't be, until the end
     FOnChange: TNotifyEvent;
     FOnRunAction: TPowerActionEvent;
+    FOnWarn: TNotifyEvent;
     procedure DoChange;
   public
     { Starts waiting for AEntered: a duration in Countdown mode, the next
@@ -46,10 +49,15 @@ type
     function Start(AMode: TCountdownMode; const AEntered: TTimeParts;
       AAction: TPowerAction; ANow: TDateTime; ATicks: QWord): Boolean;
     { Called regularly while running. When the time is up it stops,
-      fires OnChange and then OnRunAction with the action. }
+      fires OnChange and then OnRunAction with the action. Before that it
+      fires OnWarn once, when at most WarnSeconds are left. }
     procedure Tick(ANow: TDateTime; ATicks: QWord);
     { Stops without running the action. }
     procedure Stop;
+    { Moves the end ASeconds later and warns again before the new end.
+      Entered stays, so a stop still shows the time that was entered. Does
+      nothing when not running. }
+    procedure Postpone(ASeconds: Integer);
     { Whole seconds left, rounded up; 0 when not running. }
     function RemainingSeconds(ANow: TDateTime; ATicks: QWord): Integer;
     { When the action runs, as a local time. In ClockTime mode that is the
@@ -64,13 +72,23 @@ type
     { The time as it was entered, e.g. to show it again after a stop. }
     property Entered: TTimeParts read FEntered;
     property Action: TPowerAction read FAction;
+    { How many seconds before the end OnWarn fires, 0 for never. Set it
+      before Start: a countdown that isn't longer than that doesn't warn,
+      since whoever started it knows when it ends. }
+    property WarnSeconds: Integer read FWarnSeconds write FWarnSeconds;
     { Fired whenever the countdown starts or stops, also when it ends. }
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     { Fired when the countdown ends, after OnChange. }
     property OnRunAction: TPowerActionEvent read FOnRunAction write FOnRunAction;
+    { Fired once while running, when at most WarnSeconds are left, and
+      again after Postpone. }
+    property OnWarn: TNotifyEvent read FOnWarn write FOnWarn;
   end;
 
 implementation
+
+uses
+  DateUtils;
 
 const
   // How far the end of a countdown may drift before EndTime moves it
@@ -104,17 +122,30 @@ begin
   FEntered := AEntered;
   FAction := AAction;
   FRunning := True;
+  FWarned := (FWarnSeconds <= 0)
+    or (RemainingSeconds(ANow, ATicks) <= FWarnSeconds);
   Result := True;
   DoChange;
 end;
 
 procedure TCountdown.Tick(ANow: TDateTime; ATicks: QWord);
+var
+  Seconds: Integer;
 begin
   if not FRunning then
     Exit;
   FEndTime := EndTime(ANow, ATicks);
-  if RemainingSeconds(ANow, ATicks) > 0 then
+  Seconds := RemainingSeconds(ANow, ATicks);
+  if Seconds > 0 then
+  begin
+    if not FWarned and (Seconds <= FWarnSeconds) then
+    begin
+      FWarned := True;
+      if Assigned(FOnWarn) then
+        FOnWarn(Self);
+    end;
     Exit;
+  end;
   FRunning := False;
   DoChange;
   if Assigned(FOnRunAction) then
@@ -127,6 +158,20 @@ begin
     Exit;
   FRunning := False;
   DoChange;
+end;
+
+procedure TCountdown.Postpone(ASeconds: Integer);
+begin
+  if not FRunning then
+    Exit;
+  if FMode = cmClockTime then
+    FTarget := IncSecond(FTarget, ASeconds)
+  else
+  begin
+    FDeadline := FDeadline + QWord(Int64(ASeconds) * MSecsPerSecond);
+    FEndTime := FEndTime + ASeconds / SecondsPerDay;
+  end;
+  FWarned := False;
 end;
 
 function TCountdown.RemainingSeconds(ANow: TDateTime; ATicks: QWord): Integer;

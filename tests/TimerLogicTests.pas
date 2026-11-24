@@ -32,6 +32,7 @@ type
     procedure DefaultCountdown_UsesDelay;
     procedure DefaultClockTime_AddsDelay;
     procedure FormatRemaining_Formats;
+    procedure FormatSecondsLeft_Formats;
     procedure FormatDuration_Formats;
     procedure FormatEndTime_SameDay;
     procedure FormatEndTime_NextDayIsTomorrow;
@@ -215,6 +216,13 @@ begin
   AssertEquals('00 h 00 m 00 s', FormatRemaining(0));
   AssertEquals('01 h 05 m 09 s', FormatRemaining(3909));
   AssertEquals('23 h 59 m 59 s', FormatRemaining(86399));
+end;
+
+procedure TTimerLogicTests.FormatSecondsLeft_Formats;
+begin
+  AssertEquals('1 second', FormatSecondsLeft(1));
+  AssertEquals('2 seconds', FormatSecondsLeft(2));
+  AssertEquals('60 seconds', FormatSecondsLeft(60));
 end;
 
 procedure TTimerLogicTests.FormatDuration_Formats;
