@@ -38,8 +38,10 @@ type
     lblStatus: TLabel;
     miClose: TMenuItem;
     miSeparatorBottom: TMenuItem;
+    miSeparatorTop: TMenuItem;
     miShow: TMenuItem;
     miStop: TMenuItem;
+    miTimeLeft: TMenuItem;
     pmTray: TPopupMenu;
     pnlFocusHolder: TPanel;
     pnlStatus: TPanel;
@@ -63,6 +65,8 @@ type
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
     procedure miStopClick(Sender: TObject);
+    procedure pmTrayClose(Sender: TObject);
+    procedure pmTrayPopup(Sender: TObject);
     procedure ModeButtonClick(Sender: TObject);
     procedure TimeFieldExit(Sender: TObject);
     procedure TimeFieldKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -82,6 +86,8 @@ type
     FTotalSeconds: Integer;
     // The seconds left that the progress shows, -1 for none yet
     FProgressSeconds: Integer;
+    // Between the tray menu's OnPopup and OnClose
+    FTrayMenuOpen: Boolean;
     { The settings as loaded, or as last changed in the Options dialog.
       CurrentSettings adds the current window position. }
     FSettings: TAppSettings;
@@ -110,6 +116,8 @@ type
     procedure SetStatusText(const AText: string);
     procedure RunAction(AAction: TPowerAction);
     procedure SetTrayHint(const AHint: string);
+    function TrayTimeLeftText(ASeconds: Integer): string;
+    procedure SetTrayTimeLeft(ASeconds: Integer);
     procedure SetWindowTitle(const ATitle: string);
     procedure HideToTray;
     procedure RestoreFromTray;
@@ -140,6 +148,8 @@ resourcestring
   rsEndedDuringSleep = 'The time passed while the computer was asleep.';
   // Application title, action, remaining time
   rsTrayHintRunning = '%s - %s after %s';
+  // The tray menu's first line: action, time left (see FormatDuration)
+  rsTrayTimeLeft = '%s in %s';
 
 { TfrmMain }
 
@@ -527,7 +537,9 @@ begin
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
-    // The tray menu can stop it
+    // The tray menu shows the time left and can stop it
+    miTimeLeft.Visible := True;
+    miSeparatorTop.Visible := True;
     miStop.Visible := True;
     miSeparatorBottom.Visible := True;
     FTotalSeconds := FCountdown.RemainingSeconds(Now, GetTickCount64);
@@ -546,6 +558,8 @@ begin
     SetInputsEnabled(True);
     btnStart.Caption := rsStart;
     btnStart.Default := True;
+    miTimeLeft.Visible := False;
+    miSeparatorTop.Visible := False;
     miStop.Visible := False;
     miSeparatorBottom.Visible := False;
     SetTrayHint(AppTitle);
@@ -629,6 +643,7 @@ begin
     Seconds));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
     PowerActionName(SelectedAction), FormatRemaining(Seconds)]));
+  SetTrayTimeLeft(Seconds);
   // With every change, since Windows drops it when the taskbar button is
   // created again, e.g. after the window comes back from the tray
   if Seconds <> FProgressSeconds then
@@ -702,6 +717,60 @@ begin
   // Only on change, as the tray hint
   if Caption <> ATitle then
     Caption := ATitle;
+end;
+
+{$IFDEF WINDOWS}
+{ user32.dll is one of the known DLLs, which Windows always loads from the
+  system directory, so it can stay imported. }
+function FindWindowA(lpClassName, lpWindowName: PChar): HWND; stdcall;
+  external 'user32.dll';
+function InvalidateRect(hWnd: HWND; lpRect: Pointer;
+  bErase: LongBool): LongBool; stdcall; external 'user32.dll';
+{$ENDIF}
+
+{ Windows doesn't promise to repaint an open menu when an item's text
+  changes, so the open menu's window, of the class #32768, is invalidated:
+  it repaints from the menu's current texts. Only called while the tray
+  menu is open, which captures the mouse, so the open menu is that one. }
+procedure RepaintOpenMenu;
+begin
+  {$IFDEF WINDOWS}
+  InvalidateRect(FindWindowA('#32768', nil), nil, False);
+  {$ENDIF}
+end;
+
+function TfrmMain.TrayTimeLeftText(ASeconds: Integer): string;
+begin
+  Result := Format(rsTrayTimeLeft, [PowerActionName(FCountdown.Action),
+    FormatDuration(ASeconds)]);
+end;
+
+{ The tray menu's first line, while running. The countdown timer keeps
+  firing while the menu is open, so it counts down there too. }
+procedure TfrmMain.SetTrayTimeLeft(ASeconds: Integer);
+var
+  TimeLeft: string;
+begin
+  TimeLeft := TrayTimeLeftText(ASeconds);
+  // Only on change: the countdown timer fires several times per second
+  if miTimeLeft.Caption = TimeLeft then
+    Exit;
+  miTimeLeft.Caption := TimeLeft;
+  if FTrayMenuOpen then
+    RepaintOpenMenu;
+end;
+
+{ Fired before the menu opens, so its first line is never stale. }
+procedure TfrmMain.pmTrayPopup(Sender: TObject);
+begin
+  if FCountdown.Running then
+    SetTrayTimeLeft(FCountdown.RemainingSeconds(Now, GetTickCount64));
+  FTrayMenuOpen := True;
+end;
+
+procedure TfrmMain.pmTrayClose(Sender: TObject);
+begin
+  FTrayMenuOpen := False;
 end;
 
 procedure TfrmMain.FormWindowStateChange(Sender: TObject);

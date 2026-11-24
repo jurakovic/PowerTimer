@@ -309,8 +309,19 @@ object frmMain: TfrmMain
     Top = 80
   end
   object pmTray: TPopupMenu
+    OnClose = pmTrayClose
+    OnPopup = pmTrayPopup
     Left = 72
     Top = 80
+    object miTimeLeft: TMenuItem
+      Caption = 'Shut down in 00:42:17'
+      Enabled = False
+      Visible = False
+    end
+    object miSeparatorTop: TMenuItem
+      Caption = '-'
+      Visible = False
+    end
     object miShow: TMenuItem
       Caption = 'Show'
       Default = True
