@@ -96,7 +96,7 @@ All code is in `src/`; each form is a `.pas` unit with its `.lfm` form file.
 
 **The time fields.** The fields take two digits each, up to 23:59:59 (`MaxHour`, `MaxMinute`, `MaxSecond`); `TimeFields` has their input rules: what a key press may type, the Up/Down steps, which wrap around, and the parsing, which clamps. The default delay of the settings (1 to 24 hours) fills them: in Countdown mode as hours (`DefaultCountdown`, which shows 24 hours as 23:59:59), in At time mode as the time that many hours from now (`DefaultClockTime`). While running, Countdown mode counts down in the fields, up to 99:59:59 (`MaxFieldSeconds`, `SecondsToFieldParts`), and At time mode shows the end time there.
 
-**The texts** of the status bar, the window title, the tray menu and the warning are built in `TimerLogic` (`CountdownStatus`, `CountdownTitle`, `TrayTimeLeft`, `FormatSecondsLeft`), with the time format of the user's Windows settings (`DefaultFormatSettings`): the short time format, or the long one, with seconds, in At time mode when the entered seconds aren't zero. They are resource strings.
+**The texts** of the status bar, the window title and the tray menu are built in `TimerLogic` (`CountdownStatus`, `CountdownTitle`, `TrayTimeLeft`), and the warning's message in `WarningForm`, with the seconds left from `TimerLogic.FormatSecondsLeft`. The end times use the time format of the user's Windows settings (`DefaultFormatSettings`): the short time format, or the long one, with seconds, in At time mode when the entered seconds aren't zero. Their formats are resource strings; the action names in them are the constants of `PowerActionInfo`, see [Power actions](#power-actions).
 
 ## Power actions
 
@@ -231,5 +231,5 @@ Releases are made with the "Publish" workflow, `.github/workflows/publish.yml`, 
 
 ## Known limitations
 
-- The texts are in English only: they are resource strings, but there are no translations.
+- The texts are in English only, and there are no translations. The texts in the code are resource strings, except the action names, which are constants in `PowerActionInfo`; the forms' texts are in their `.lfm` files.
 - In Countdown mode, the time fields show at most 99:59:59 while running; with more time left after adding time, they stay there, while the status bar, the title and the tray show the real time left.
