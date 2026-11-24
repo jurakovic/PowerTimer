@@ -85,6 +85,7 @@ type
     procedure RestoreWindowPosition(const ASettings: TAppSettings);
     function CurrentSettings: TAppSettings;
     procedure SaveCurrentSettings;
+    procedure AppEndSession(Sender: TObject);
     function SelectedAction: TPowerAction;
     procedure SetInputsEnabled(AEnabled: Boolean);
     procedure StartCountdown;
@@ -134,6 +135,7 @@ begin
   FCountdown := TCountdown.Create;
   FCountdown.OnChange := @CountdownChange;
   FCountdown.OnRunAction := @RunAction;
+  Application.AddOnEndSessionHandler(@AppEndSession);
   // Without an active control the form would focus the hour field. The
   // empty, zero-size panel holds the focus instead, so nothing looks
   // selected until the user clicks a control or presses Tab; it is no tab
@@ -150,6 +152,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  Application.RemoveOnEndSessionHandler(@AppEndSession);
   FCountdown.Free;
 end;
 
@@ -250,6 +253,15 @@ end;
 procedure TfrmMain.SaveCurrentSettings;
 begin
   SaveSettings(CurrentSettings);
+end;
+
+{ Windows is ending the session: shutting down, restarting or signing out,
+  started by the user, not by Power Timer. The LCL closes no forms then,
+  it only runs the end-session handlers, and the process ends after them,
+  so FormClose wouldn't save the settings. }
+procedure TfrmMain.AppEndSession(Sender: TObject);
+begin
+  SaveCurrentSettings;
 end;
 
 procedure TfrmMain.actOptionsExecute(Sender: TObject);
