@@ -15,11 +15,32 @@ type
     remove one. }
   TPowerAction = (paShutdown, paRestart, paLogoff, paLock, paSleep, paHibernate);
 
+  { How an action runs: shutdown.exe with arguments, LockWorkStation or
+    SetSuspendState. }
+  TActionKind = (akShutdownExe, akLockWorkStation, akSuspend);
+
+  TPowerActionInfo = record
+    Name: string;
+    Kind: TActionKind;
+    // The arguments for shutdown.exe of akShutdownExe, '' for the others
+    ShutdownArgs: string;
+  end;
+
 const
   DefaultPowerAction = paShutdown;
 
-  PowerActionNames: array[TPowerAction] of string = (
-    'Shut down', 'Restart', 'Sign out', 'Lock', 'Sleep', 'Hibernate');
+  { Each action, described once: a new action is one entry, and the table
+    doesn't compile without an entry for every action. }
+  PowerActionInfo: array[TPowerAction] of TPowerActionInfo = (
+    (Name: 'Shut down'; Kind: akShutdownExe; ShutdownArgs: '/s /t 0'),
+    (Name: 'Restart'; Kind: akShutdownExe; ShutdownArgs: '/r /t 0'),
+    (Name: 'Sign out'; Kind: akShutdownExe; ShutdownArgs: '/l'),
+    (Name: 'Lock'; Kind: akLockWorkStation; ShutdownArgs: ''),
+    (Name: 'Sleep'; Kind: akSuspend; ShutdownArgs: ''),
+    (Name: 'Hibernate'; Kind: akShutdownExe; ShutdownArgs: '/h'));
+
+{ The name of AAction, as the lists show it. }
+function PowerActionName(AAction: TPowerAction): string;
 
 { Maps a list index (e.g. ItemIndex of a combo box or a stored setting)
   to an action. Out of range values give DefaultPowerAction. }
@@ -112,6 +133,11 @@ resourcestring
   rsOnlyOnWindows = '%s is only supported on Windows.';
   {$ENDIF}
 
+function PowerActionName(AAction: TPowerAction): string;
+begin
+  Result := PowerActionInfo[AAction].Name;
+end;
+
 function PowerActionFromIndex(AIndex: Integer): TPowerAction;
 begin
   if (AIndex >= Ord(Low(TPowerAction))) and (AIndex <= Ord(High(TPowerAction))) then
@@ -128,7 +154,7 @@ begin
   try
     AItems.Clear;
     for Action := Low(TPowerAction) to High(TPowerAction) do
-      AItems.Add(PowerActionNames[Action]);
+      AItems.Add(PowerActionName(Action));
   finally
     AItems.EndUpdate;
   end;
@@ -136,14 +162,7 @@ end;
 
 function ShutdownArguments(AAction: TPowerAction): string;
 begin
-  case AAction of
-    paShutdown: Result := '/s /t 0';
-    paRestart: Result := '/r /t 0';
-    paLogoff: Result := '/l';
-    paHibernate: Result := '/h';
-  else
-    Result := '';
-  end;
+  Result := PowerActionInfo[AAction].ShutdownArgs;
 end;
 
 function UnavailableReason(AAction: TPowerAction;
@@ -275,16 +294,18 @@ var
   SetSuspendState: TSetSuspendState;
 begin
   AError := '';
-  case AAction of
-    paShutdown, paRestart, paLogoff, paHibernate:
+  Result := False;
+  // No else: each kind has its branch
+  case PowerActionInfo[AAction].Kind of
+    akShutdownExe:
       Result := RunShutdownExe(ShutdownArguments(AAction), AError);
-    paLock:
+    akLockWorkStation:
       begin
         Result := LockWorkStation;
         if not Result then
           AError := LastErrorText(rsCouldNotLock);
       end;
-    paSleep:
+    akSuspend:
       begin
         Pointer(SetSuspendState) := PowrProfFunction('SetSuspendState', AError);
         if not Assigned(SetSuspendState) then
@@ -297,8 +318,6 @@ begin
         if not Result then
           AError := LastErrorText(rsCouldNotSleep);
       end;
-  else
-    Result := False;
   end;
 end;
 
@@ -339,7 +358,7 @@ end;
 function ExecutePowerAction(AAction: TPowerAction; out AError: string): Boolean;
 begin
   Result := False;
-  AError := Format(rsOnlyOnWindows, [PowerActionNames[AAction]]);
+  AError := Format(rsOnlyOnWindows, [PowerActionName(AAction)]);
 end;
 
 function PowerActionUnavailableReason(AAction: TPowerAction): string;

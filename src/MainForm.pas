@@ -550,7 +550,7 @@ begin
     FWarning.OnCancelCountdown := @WarningCancelCountdown;
     FWarning.OnPostpone := @WarningPostpone;
   end;
-  FWarning.ShowWarning(PowerActionNames[FCountdown.Action],
+  FWarning.ShowWarning(PowerActionName(FCountdown.Action),
     FCountdown.RemainingSeconds(Now, GetTickCount64), WarningDetail);
 end;
 
@@ -602,13 +602,13 @@ begin
   end
   else
     WriteTimeFields(SecondsToFieldParts(Seconds));
-  SetStatusText(CountdownStatus(skRunning, PowerActionNames[FCountdown.Action],
+  SetStatusText(CountdownStatus(skRunning, PowerActionName(FCountdown.Action),
     ANow, EndTime, Seconds, ClockMode and (FCountdown.Entered.Seconds <> 0),
     DefaultFormatSettings));
   SetTrayHint(Format(rsTrayHintRunning, [AppTitle,
-    PowerActionNames[SelectedAction], FormatRemaining(Seconds)]));
+    PowerActionName(SelectedAction), FormatRemaining(Seconds)]));
   if (FWarning <> nil) and FWarning.Visible then
-    FWarning.ShowWarning(PowerActionNames[FCountdown.Action], Seconds,
+    FWarning.ShowWarning(PowerActionName(FCountdown.Action), Seconds,
       WarningDetail);
 end;
 
@@ -629,7 +629,7 @@ begin
   begin
     Target := NextOccurrence(NowTime, Entered);
     SetStatusText(CountdownStatus(skClockIdle,
-      PowerActionNames[SelectedAction], NowTime, Target,
+      PowerActionName(SelectedAction), NowTime, Target,
       SecondsUntil(NowTime, Target), Entered.Seconds <> 0,
       DefaultFormatSettings));
   end
@@ -637,7 +637,7 @@ begin
   begin
     Seconds := TimePartsToSeconds(Entered);
     SetStatusText(CountdownStatus(skCountdownIdle,
-      PowerActionNames[SelectedAction], NowTime,
+      PowerActionName(SelectedAction), NowTime,
       NowTime + Seconds / SecondsPerDay, Seconds, False,
       DefaultFormatSettings));
   end;

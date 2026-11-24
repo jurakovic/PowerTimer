@@ -20,6 +20,7 @@ type
     procedure ShutdownArguments_PerAction;
     procedure ShutdownExePath_IsInSystemDirectory;
     procedure Names_MatchActions;
+    procedure Kinds_PerAction;
     procedure UnavailableReason_Sleep;
     procedure UnavailableReason_Hibernate;
     procedure UnavailableReason_OtherActionsAlwaysAvailable;
@@ -69,7 +70,7 @@ begin
     AssertEquals('count', Ord(High(TPowerAction)) + 1, Items.Count);
     for Action := Low(TPowerAction) to High(TPowerAction) do
     begin
-      AssertEquals(PowerActionNames[Action], Items[Ord(Action)]);
+      AssertEquals(PowerActionName(Action), Items[Ord(Action)]);
       AssertTrue(PowerActionFromIndex(Ord(Action)) = Action);
     end;
   finally
@@ -106,12 +107,34 @@ end;
 
 procedure TPowerActionsTests.Names_MatchActions;
 begin
-  AssertEquals('Shut down', PowerActionNames[paShutdown]);
-  AssertEquals('Restart', PowerActionNames[paRestart]);
-  AssertEquals('Sign out', PowerActionNames[paLogoff]);
-  AssertEquals('Lock', PowerActionNames[paLock]);
-  AssertEquals('Sleep', PowerActionNames[paSleep]);
-  AssertEquals('Hibernate', PowerActionNames[paHibernate]);
+  AssertEquals('Shut down', PowerActionName(paShutdown));
+  AssertEquals('Restart', PowerActionName(paRestart));
+  AssertEquals('Sign out', PowerActionName(paLogoff));
+  AssertEquals('Lock', PowerActionName(paLock));
+  AssertEquals('Sleep', PowerActionName(paSleep));
+  AssertEquals('Hibernate', PowerActionName(paHibernate));
+end;
+
+{ Lock and Sleep are API calls, the others run shutdown.exe; only these
+  have arguments for it. }
+procedure TPowerActionsTests.Kinds_PerAction;
+var
+  Action: TPowerAction;
+  Info: TPowerActionInfo;
+begin
+  AssertTrue('Lock', PowerActionInfo[paLock].Kind = akLockWorkStation);
+  AssertTrue('Sleep', PowerActionInfo[paSleep].Kind = akSuspend);
+  for Action := Low(TPowerAction) to High(TPowerAction) do
+  begin
+    Info := PowerActionInfo[Action];
+    if Action in [paLock, paSleep] then
+      AssertEquals(Info.Name + ' arguments', '', Info.ShutdownArgs)
+    else
+    begin
+      AssertTrue(Info.Name + ' kind', Info.Kind = akShutdownExe);
+      AssertTrue(Info.Name + ' arguments', Info.ShutdownArgs <> '');
+    end;
+  end;
 end;
 
 procedure TPowerActionsTests.UnavailableReason_Sleep;
