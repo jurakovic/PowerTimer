@@ -227,7 +227,10 @@ begin
         if not Assigned(SetSuspendState) then
           Exit(False);
         EnableShutdownPrivilege;
-        Result := SetSuspendState(False, True, True);
+        // Sleep, not hibernate; bForce has no effect; wake events stay
+        // enabled, so a wake timer such as a scheduled task can wake the
+        // computer, as after Sleep from the Start menu
+        Result := SetSuspendState(False, False, False);
         if not Result then
           AError := LastErrorText(rsCouldNotSleep);
       end;
