@@ -236,6 +236,23 @@ object frmMain: TfrmMain
       Align = alTop
       Shape = bsTopLine
     end
+    object lblAddTime: TLabel
+      Cursor = crHandPoint
+      Left = 492
+      Height = 26
+      Top = 2
+      Width = 46
+      Align = alRight
+      BorderSpacing.Right = 8
+      Caption = '+10 &min'
+      Font.Color = clHotLight
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Layout = tlCenter
+      ParentFont = False
+      Visible = False
+      OnClick = lblAddTimeClick
+    end
     object lblAbout: TLabel
       Cursor = crHandPoint
       Left = 504
@@ -332,6 +349,11 @@ object frmMain: TfrmMain
       Visible = False
       OnClick = miStopClick
     end
+    object miAddTime: TMenuItem
+      Caption = 'Add 10 minutes'
+      Visible = False
+      OnClick = miAddTimeClick
+    end
     object miSeparatorBottom: TMenuItem
       Caption = '-'
       Visible = False
@@ -353,6 +375,12 @@ object frmMain: TfrmMain
       Caption = '&About'
       OnExecute = actAboutExecute
       ShortCut = 32833
+    end
+    object actAddTime: TAction
+      Caption = '+10 &min'
+      Enabled = False
+      OnExecute = actAddTimeExecute
+      ShortCut = 32845
     end
   end
 end

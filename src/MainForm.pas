@@ -18,6 +18,7 @@ type
 
   TfrmMain = class(TForm)
     actAbout: TAction;
+    actAddTime: TAction;
     actOptions: TAction;
     alMain: TActionList;
     btnCountdown: TSpeedButton;
@@ -29,6 +30,7 @@ type
     edtMinute: TEdit;
     edtSecond: TEdit;
     lblAbout: TLabel;
+    lblAddTime: TLabel;
     lblColon1: TLabel;
     lblColon2: TLabel;
     lblHours: TLabel;
@@ -36,6 +38,7 @@ type
     lblOptions: TLabel;
     lblSeconds: TLabel;
     lblStatus: TLabel;
+    miAddTime: TMenuItem;
     miClose: TMenuItem;
     miSeparatorBottom: TMenuItem;
     miSeparatorTop: TMenuItem;
@@ -51,6 +54,7 @@ type
     tmrStatus: TTimer;
     trayIcon: TTrayIcon;
     procedure actAboutExecute(Sender: TObject);
+    procedure actAddTimeExecute(Sender: TObject);
     procedure actOptionsExecute(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -61,6 +65,8 @@ type
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormWindowStateChange(Sender: TObject);
     procedure lblAboutClick(Sender: TObject);
+    procedure lblAddTimeClick(Sender: TObject);
+    procedure miAddTimeClick(Sender: TObject);
     procedure lblOptionsClick(Sender: TObject);
     procedure miCloseClick(Sender: TObject);
     procedure miShowClick(Sender: TObject);
@@ -112,6 +118,7 @@ type
     procedure WarningPostpone(Sender: TObject);
     procedure PostponeCountdown(ASeconds: Integer);
     procedure UpdateAddTimeCaptions;
+    procedure AddTime;
     procedure ShowRemaining(ANow: TDateTime; ATicks: QWord);
     procedure UpdateIdleStatus;
     procedure SetStatusText(const AText: string);
@@ -151,6 +158,10 @@ resourcestring
   rsTrayHintRunning = '%s - %s after %s';
   // The tray menu's first line: action, time left (see FormatDuration)
   rsTrayTimeLeft = '%s in %s';
+  // Minutes; the link in the status bar, with its access key (Alt+M)
+  rsAddTimeLink = '+%d &min';
+  // Minutes; the tray menu's item
+  rsAddTimeMenu = 'Add %d minutes';
 
 { TfrmMain }
 
@@ -178,6 +189,7 @@ begin
   FillPowerActionList(cbAction.Items);
   FSettings := LoadSettings;
   ApplySettings;
+  UpdateAddTimeCaptions;
   RestoreWindowPosition(FSettings);
   UpdateIdleStatus;
 end;
@@ -308,7 +320,8 @@ begin
 end;
 
 { The links in the status bar are labels: they can't take the keyboard
-  focus, so their actions give them the shortcuts Alt+O and Alt+A. }
+  focus, so their actions give them the shortcuts Alt+O, Alt+A and, while
+  a countdown runs, Alt+M. }
 procedure TfrmMain.lblOptionsClick(Sender: TObject);
 begin
   actOptions.Execute;
@@ -317,6 +330,21 @@ end;
 procedure TfrmMain.lblAboutClick(Sender: TObject);
 begin
   actAbout.Execute;
+end;
+
+procedure TfrmMain.lblAddTimeClick(Sender: TObject);
+begin
+  actAddTime.Execute;
+end;
+
+procedure TfrmMain.actAddTimeExecute(Sender: TObject);
+begin
+  AddTime;
+end;
+
+procedure TfrmMain.miAddTimeClick(Sender: TObject);
+begin
+  AddTime;
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -482,8 +510,12 @@ begin
   cbAction.Enabled := AEnabled;
   actOptions.Enabled := AEnabled;
   actAbout.Enabled := AEnabled;
-  lblOptions.Enabled := AEnabled;
-  lblAbout.Enabled := AEnabled;
+  // While running, the link that adds time takes the place of Options and
+  // About in the status bar
+  lblOptions.Visible := AEnabled;
+  lblAbout.Visible := AEnabled;
+  actAddTime.Enabled := not AEnabled;
+  lblAddTime.Visible := not AEnabled;
   UpdateModeMark;
 end;
 
@@ -539,10 +571,11 @@ begin
     btnStart.Caption := rsStop;
     // Enter starts a countdown but doesn't stop it by accident
     btnStart.Default := False;
-    // The tray menu shows the time left and can stop it
+    // The tray menu shows the time left, can stop it and add time
     miTimeLeft.Visible := True;
     miSeparatorTop.Visible := True;
     miStop.Visible := True;
+    miAddTime.Visible := True;
     miSeparatorBottom.Visible := True;
     FTotalSeconds := FCountdown.RemainingSeconds(Now, GetTickCount64);
     FProgressSeconds := -1;
@@ -563,6 +596,7 @@ begin
     miTimeLeft.Visible := False;
     miSeparatorTop.Visible := False;
     miStop.Visible := False;
+    miAddTime.Visible := False;
     miSeparatorBottom.Visible := False;
     SetTrayHint(AppTitle);
     SetWindowTitle(AppTitle);
@@ -612,8 +646,17 @@ end;
   options. }
 procedure TfrmMain.UpdateAddTimeCaptions;
 begin
+  lblAddTime.Caption := Format(rsAddTimeLink, [FSettings.AddMinutes]);
+  miAddTime.Caption := Format(rsAddTimeMenu, [FSettings.AddMinutes]);
   if FWarning <> nil then
     FWarning.SetPostponeMinutes(FSettings.AddMinutes);
+end;
+
+{ From the status bar's link and the tray menu, as from the warning. }
+procedure TfrmMain.AddTime;
+begin
+  if FCountdown.Running then
+    PostponeCountdown(FSettings.AddMinutes * SecondsPerMinute);
 end;
 
 { The warning comes back WarnSeconds before the new end. }
