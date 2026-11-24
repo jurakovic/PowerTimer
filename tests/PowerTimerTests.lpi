@@ -24,7 +24,7 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
-    <Units Count="13">
+    <Units Count="15">
       <Unit0>
         <Filename Value="PowerTimerTests.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -77,6 +77,14 @@
         <Filename Value="..\src\Countdown.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit12>
+      <Unit13>
+        <Filename Value="SystemLibrariesTests.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="..\src\SystemLibraries.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit14>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

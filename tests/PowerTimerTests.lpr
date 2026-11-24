@@ -15,6 +15,7 @@ uses
   TimeFieldsTests,
   CountdownTests,
   PowerActionsTests,
+  SystemLibrariesTests,
   AppSettingsTests,
   AppInfoTests;
 

@@ -47,7 +47,7 @@ implementation
 
 uses
   {$IFDEF WINDOWS}
-  Windows, Process,
+  Windows, Process, SystemLibraries,
   {$ENDIF}
   SysUtils;
 
@@ -106,17 +106,8 @@ const
   ShutdownExeName = 'shutdown.exe';
 
 function ShutdownExePath: string;
-var
-  Buffer: array[0..MAX_PATH] of WideChar;
-  Len: UINT;
-  Dir: UnicodeString;
 begin
-  Len := GetSystemDirectoryW(@Buffer[0], Length(Buffer));
-  // 0 means failure; a value >= the buffer size is the size it would need
-  if (Len = 0) or (Len >= Length(Buffer)) then
-    Exit('');
-  SetString(Dir, PWideChar(@Buffer[0]), Len);
-  Result := IncludeTrailingPathDelimiter(string(Dir)) + ShutdownExeName;
+  Result := SystemFilePath(ShutdownExeName);
 end;
 
 function RunShutdownExe(const AArguments: string; out AError: string): Boolean;
