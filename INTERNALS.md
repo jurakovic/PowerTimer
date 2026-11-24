@@ -27,7 +27,7 @@ How Power Timer is built and how it works: the structure of the code, the countd
 
 ## Building
 
-Power Timer is built with Lazarus 4.8 and FPC 3.2.2.
+Power Timer is built with [Lazarus](https://www.lazarus-ide.org/) 4.8 and FPC 3.2.2.
 
 - **IDE**: open `src/PowerTimer.lpi` in Lazarus and press *Run*.
 - **Command line**:
